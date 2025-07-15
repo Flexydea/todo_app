@@ -71,40 +71,104 @@ class _ToDoScreenState extends State<ToDoScreen>
 
   // to edit a list
   void _editTask(Task task) {
-    final TextEditingController editController = TextEditingController(
+    TextEditingController titleController = TextEditingController(
       text: task.title,
     );
+    String selectedCategory = task.category;
+    String selectedPriority = task.priority;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Edit Task'),
-          content: TextField(
-            controller: editController,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: 'Update task',
-              border: OutlineInputBorder(),
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 20,
+            left: 16,
+            right: 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    "Edit Task",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                SizedBox(height: 12),
+
+                // Title Field
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: 'Task Title'),
+                ),
+                SizedBox(height: 12),
+
+                // Category Dropdown
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: InputDecoration(labelText: 'Category'),
+                  items: _categories.map((cat) {
+                    return DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat.toUpperCase()),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    selectedCategory = value!;
+                  },
+                ),
+                SizedBox(height: 12),
+
+                // Priority Dropdown
+                DropdownButtonFormField<String>(
+                  value: selectedPriority,
+                  decoration: InputDecoration(labelText: 'Priority'),
+                  items: ['low', 'medium', 'high'].map((priority) {
+                    return DropdownMenuItem(
+                      value: priority,
+                      child: Text(priority.toUpperCase()),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    selectedPriority = value!;
+                  },
+                ),
+                SizedBox(height: 16),
+
+                // Save Button
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        task.title = titleController.text;
+                        task.category = selectedCategory;
+                        task.priority = selectedPriority;
+                      });
+                      _saveTasks();
+                      Navigator.of(context).pop(); // Close modal
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: Text(
+                      'Save',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              child: Text('Cancel', style: TextStyle(fontSize: 20)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text('Save', style: TextStyle(fontSize: 20)),
-              onPressed: () {
-                setState(() {
-                  task.title = editController.text;
-                  task = task;
-                });
-                _saveTasks();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
         );
       },
     );
