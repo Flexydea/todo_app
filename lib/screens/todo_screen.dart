@@ -33,6 +33,9 @@ class _ToDoScreenState extends State<ToDoScreen>
 
   late TabController _tabController;
 
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -452,8 +455,29 @@ class _ToDoScreenState extends State<ToDoScreen>
   // Tab for displaying tasks (pending + completed)
   Widget _buildTaskListTab() {
     // Separate tasks into pending and completed
-    final pendingTasks = _tasks.where((task) => !task.done).toList();
-    final completedTasks = _tasks.where((task) => task.done).toList();
+
+    final pendingTasks = _tasks.where((task) {
+      if (task.done) return false;
+
+      final matchesSearch = task.title.toLowerCase().contains(_searchQuery);
+      if (_searchQuery.isNotEmpty && !matchesSearch) return false;
+
+      if (_showTodayOnly && task.dueDate != null) {
+        final today = DateTime.now();
+        return task.dueDate!.year == today.year &&
+            task.dueDate!.month == today.month &&
+            task.dueDate!.day == today.day;
+      }
+
+      return true;
+    }).toList();
+
+    final completedTasks = _tasks.where((task) {
+      if (!task.done) return false;
+
+      final matchesSearch = task.title.toLowerCase().contains(_searchQuery);
+      return _searchQuery.isEmpty || matchesSearch;
+    }).toList();
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -519,6 +543,36 @@ class _ToDoScreenState extends State<ToDoScreen>
             },
           ),
           const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value
+                      .toLowerCase(); // store lowercase search term
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search tasks...',
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchQuery = '';
+                            _searchController.clear(); // clear text
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
 
           /// 🔹 TASK DISPLAY
           Expanded(
