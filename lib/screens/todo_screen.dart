@@ -184,6 +184,206 @@ class _ToDoScreenState extends State<ToDoScreen>
     await prefs.setString('tasks', json.encode(taskListJson));
   }
 
+  Widget _buildTaskTile(Task task, int index) {
+    // Function to determine color based on priority
+
+    Color getCategoryColor(String category) {
+      switch (category.toLowerCase()) {
+        case 'work':
+          return Colors.blue;
+        case 'personal':
+          return Colors.purple;
+        case 'shopping':
+          return Colors.teal;
+        case 'other':
+          return Colors.grey;
+        default:
+          return Colors.black;
+      }
+    }
+
+    // Determine the color of the priority label based on its value
+    Color getPriorityColor(String priority) {
+      switch (priority) {
+        case 'high':
+          return Colors.red;
+        case 'medium':
+          return Colors.orange;
+        case 'low':
+          return Colors.green;
+        default:
+          return Colors.grey;
+      }
+    }
+
+    // Get this task's priority
+    final priority = task.priority ?? 'none';
+    return Dismissible(
+      key: Key(task.title + task.toString()), // Unique key
+      background: Container(
+        color: Colors.green,
+        alignment: Alignment.centerLeft,
+        padding: EdgeInsets.only(left: 20),
+        child: Icon(Icons.check, color: Colors.white),
+      ),
+      secondaryBackground: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20),
+        child: Icon(Icons.delete, color: Colors.white),
+      ),
+
+      // Handle swipe confirmation
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          // Confirm before deleting
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text('Delete Task'),
+              content: Text('Are you sure you want to delete this task?'),
+              actions: [
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                ),
+                TextButton(
+                  child: Text('Delete'),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                ),
+              ],
+            ),
+          );
+          return confirm ?? false;
+        } else {
+          // Mark as complete on swipe right
+          setState(() {
+            task.done = !task.done;
+            _saveTasks();
+          });
+          return false; // Don't dismiss the tile visually
+        }
+      },
+
+      // Actually remove task if deleted
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          setState(() {
+            _tasks.remove(task); // ✅ Correct way to remove by object
+          });
+          _saveTasks();
+        }
+      },
+
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 3,
+        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 🔹 HEADER - Title and Priority
+            Container(
+              decoration: BoxDecoration(
+                color: getPriorityColor(task.priority).withOpacity(0.8),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: () => _editTask(task),
+                      child: Text(
+                        task.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    task.priority.toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // 🔹 BODY - Date, Time, Category
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(15),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Date and Time
+                  if (task.dueDate != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            '${task.dueDate!.toLocal().toString().split(' ')[0]}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Icon(Icons.access_time, size: 16, color: Colors.grey),
+                          SizedBox(width: 6),
+                          Text(
+                            TimeOfDay.fromDateTime(
+                              task.dueDate!,
+                            ).format(context),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Category
+                  Row(
+                    children: [
+                      Icon(Icons.category, size: 16, color: Colors.grey),
+                      SizedBox(width: 6),
+                      Text(
+                        task.category.toUpperCase(),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[800]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     //arrange the list according to dates
@@ -242,145 +442,6 @@ class _ToDoScreenState extends State<ToDoScreen>
       ),
     );
     // 🧱 Builds a single task tile with swipe actions
-
-    Widget _buildTaskTile(Task task) {
-      // Function to determine color based on priority
-
-      Color getCategoryColor(String category) {
-        switch (category.toLowerCase()) {
-          case 'work':
-            return Colors.blue;
-          case 'personal':
-            return Colors.purple;
-          case 'shopping':
-            return Colors.teal;
-          case 'other':
-            return Colors.grey;
-          default:
-            return Colors.black;
-        }
-      }
-
-      // Determine the color of the priority label based on its value
-      Color getPriorityColor(String priority) {
-        switch (priority) {
-          case 'high':
-            return Colors.red;
-          case 'medium':
-            return Colors.orange;
-          case 'low':
-            return Colors.green;
-          default:
-            return Colors.grey;
-        }
-      }
-
-      // Get this task's priority
-      final priority = task.priority ?? 'none';
-      return Dismissible(
-        key: Key(task.title + task.toString()), // Unique key
-        background: Container(
-          color: Colors.green,
-          alignment: Alignment.centerLeft,
-          padding: EdgeInsets.only(left: 20),
-          child: Icon(Icons.check, color: Colors.white),
-        ),
-        secondaryBackground: Container(
-          color: Colors.red,
-          alignment: Alignment.centerRight,
-          padding: EdgeInsets.only(right: 20),
-          child: Icon(Icons.delete, color: Colors.white),
-        ),
-
-        // Handle swipe confirmation
-        confirmDismiss: (direction) async {
-          if (direction == DismissDirection.endToStart) {
-            // Confirm before deleting
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text('Delete Task'),
-                content: Text('Are you sure you want to delete this task?'),
-                actions: [
-                  TextButton(
-                    child: Text('Cancel'),
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                  ),
-                  TextButton(
-                    child: Text('Delete'),
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                  ),
-                ],
-              ),
-            );
-            return confirm ?? false;
-          } else {
-            // Mark as complete on swipe right
-            setState(() {
-              task.done = !task.done;
-              _saveTasks();
-            });
-            return false; // Don't dismiss the tile visually
-          }
-        },
-
-        // Actually remove task if deleted
-        onDismissed: (direction) {
-          if (direction == DismissDirection.endToStart) {
-            setState(() {
-              _tasks.remove(task); // ✅ Correct way to remove by object
-            });
-            _saveTasks();
-          }
-        },
-
-        child: ListTile(
-          title: GestureDetector(
-            onTap: () => _editTask(task),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    decoration: task.done
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-                  ),
-                ),
-                if (task.dueDate != null && task.dueDate != '')
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Date: ${task.dueDate!.toLocal().toString().split(' ')[0]}',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                      ),
-                      Text(
-                        'Time: ${TimeOfDay.fromDateTime(task.dueDate!.toLocal()).format(context)}',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                Text(
-                  'Priority: ${(task.priority ?? 'none').toUpperCase()}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: getPriorityColor(task.priority),
-                  ),
-                ),
-                Text(
-                  'Category: ${task.category?.toUpperCase() ?? 'NONE'}',
-                  style: TextStyle(fontSize: 13, color: Colors.blueGrey),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
 
     //collapse
     // Default: Show all tasks line 86
@@ -694,118 +755,6 @@ class _ToDoScreenState extends State<ToDoScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTaskTile(Task task, int index) {
-    Color getPriorityColor(String priority) {
-      switch (priority) {
-        case 'high':
-          return Colors.red;
-        case 'medium':
-          return Colors.orange;
-        case 'low':
-          return Colors.green;
-        default:
-          return Colors.grey;
-      }
-    }
-
-    return Dismissible(
-      key: Key(task.title + task.dueDate.toString()),
-      background: Container(
-        color: Colors.green,
-        alignment: Alignment.centerLeft,
-        padding: EdgeInsets.only(left: 20),
-        child: Icon(Icons.check, color: Colors.white),
-      ),
-      secondaryBackground: Container(
-        color: Colors.red,
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20),
-        child: Icon(Icons.delete, color: Colors.white),
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.endToStart) {
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Delete Task'),
-              content: Text('Are you sure you want to delete this task?'),
-              actions: [
-                TextButton(
-                  child: Text('Cancel'),
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                ),
-                TextButton(
-                  child: Text('Delete'),
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                ),
-              ],
-            ),
-          );
-          return confirm ?? false;
-        } else {
-          setState(() {
-            task.done = !task.done;
-            _saveTasks();
-          });
-          return false;
-        }
-      },
-      onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart) {
-          setState(() {
-            _tasks.removeAt(index); // ✅ Remove by index
-          });
-          _saveTasks();
-        }
-      },
-      child: ListTile(
-        title: GestureDetector(
-          onTap: () => _editTask(task),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                task.title,
-                style: TextStyle(
-                  fontSize: 16,
-                  decoration: task.done
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                ),
-              ),
-              if (task.dueDate != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Date: ${task.dueDate!.toLocal().toString().split(' ')[0]}',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
-                    Text(
-                      'Time: ${TimeOfDay.fromDateTime(task.dueDate!.toLocal()).format(context)}',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              Text(
-                'Priority: ${task.priority.toUpperCase()}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: getPriorityColor(task.priority),
-                ),
-              ),
-              Text(
-                'Category: ${task.category.toUpperCase()}',
-                style: TextStyle(fontSize: 13, color: Colors.blueGrey),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
