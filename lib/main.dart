@@ -2,6 +2,7 @@
 import 'screens/todo_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/splash_screen.dart';
 // import 'dart:convert';
 
 void main() {
@@ -48,7 +49,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: _isDarkMode ? ThemeData.dark() : ThemeData.light(),
-      home: ToDoScreen(isDarkMode: _isDarkMode, onToggleTheme: _toggleTheme),
+      // home: ToDoScreen(isDarkMode: _isDarkMode, onToggleTheme: _toggleTheme),
+      home: SplashScreen(isDarkMode: _isDarkMode, onToggleTheme: _toggleTheme),
       debugShowCheckedModeBanner: false,
     );
   }
