@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task_model.dart';
+import 'package:lottie/lottie.dart';
 
 class ToDoScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -20,6 +21,7 @@ class _ToDoScreenState extends State<ToDoScreen>
     with SingleTickerProviderStateMixin {
   bool _showCompleted = true;
   bool _showTodayOnly = false;
+  bool _isShowingDeleteAnimation = false;
   bool _isDarkMode = false;
   String _selectedPriority = 'medium'; // default
   String _selectedCategory = 'personal';
@@ -27,6 +29,7 @@ class _ToDoScreenState extends State<ToDoScreen>
   List<String> _categories = ['work', 'personal', 'other'];
   String _selectedFilterCategory = 'all';
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
 
   //tasks is now a list of Task objects, not a list of maps.///
   List<Task> _tasks = [];
@@ -52,6 +55,100 @@ class _ToDoScreenState extends State<ToDoScreen>
     setState(() {
       _isDarkMode = prefs.getBool('darkMode') ?? false;
     });
+  }
+
+  void _showSuccessAnimation(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                'assets/animations/success_check.json',
+                repeat: false,
+                onLoaded: (composition) {
+                  Future.delayed(composition.duration, () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.of(
+                        context,
+                      ).pop(); // Only closes the dialog once
+                    }
+                  });
+                },
+              ),
+              SizedBox(height: 10),
+              Text("Task added!", style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteAnimation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          height: 200,
+          width: 200,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset(
+                'assets/animations/delete.json',
+                repeat: false,
+                width: 120,
+                height: 120,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Task deleted!',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Auto close after animation plays
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
+  }
+
+  void _showClearAllDeleteAnimation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: SizedBox(
+          height: 200,
+          width: 200,
+          child: Lottie.asset(
+            'assets/animations/delete.json',
+            repeat: false,
+            onLoaded: (composition) {
+              Future.delayed(composition.duration, () {
+                if (mounted) Navigator.of(context).pop();
+              });
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   // ✅ Load tasks from device storage
@@ -184,206 +281,6 @@ class _ToDoScreenState extends State<ToDoScreen>
     await prefs.setString('tasks', json.encode(taskListJson));
   }
 
-  Widget _buildTaskTile(Task task, int index) {
-    // Function to determine color based on priority
-
-    Color getCategoryColor(String category) {
-      switch (category.toLowerCase()) {
-        case 'work':
-          return Colors.blue;
-        case 'personal':
-          return Colors.purple;
-        case 'shopping':
-          return Colors.teal;
-        case 'other':
-          return Colors.grey;
-        default:
-          return Colors.black;
-      }
-    }
-
-    // Determine the color of the priority label based on its value
-    Color getPriorityColor(String priority) {
-      switch (priority) {
-        case 'high':
-          return Colors.red;
-        case 'medium':
-          return Colors.orange;
-        case 'low':
-          return Colors.green;
-        default:
-          return Colors.grey;
-      }
-    }
-
-    // Get this task's priority
-    final priority = task.priority ?? 'none';
-    return Dismissible(
-      key: Key(task.title + task.toString()), // Unique key
-      background: Container(
-        color: Colors.green,
-        alignment: Alignment.centerLeft,
-        padding: EdgeInsets.only(left: 20),
-        child: Icon(Icons.check, color: Colors.white),
-      ),
-      secondaryBackground: Container(
-        color: Colors.red,
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20),
-        child: Icon(Icons.delete, color: Colors.white),
-      ),
-
-      // Handle swipe confirmation
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.endToStart) {
-          // Confirm before deleting
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Delete Task'),
-              content: Text('Are you sure you want to delete this task?'),
-              actions: [
-                TextButton(
-                  child: Text('Cancel'),
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                ),
-                TextButton(
-                  child: Text('Delete'),
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                ),
-              ],
-            ),
-          );
-          return confirm ?? false;
-        } else {
-          // Mark as complete on swipe right
-          setState(() {
-            task.done = !task.done;
-            _saveTasks();
-          });
-          return false; // Don't dismiss the tile visually
-        }
-      },
-
-      // Actually remove task if deleted
-      onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart) {
-          setState(() {
-            _tasks.remove(task); // ✅ Correct way to remove by object
-          });
-          _saveTasks();
-        }
-      },
-
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 3,
-        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 🔹 HEADER - Title and Priority
-            Container(
-              decoration: BoxDecoration(
-                color: getPriorityColor(task.priority).withOpacity(0.8),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: () => _editTask(task),
-                      child: Text(
-                        task.title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    task.priority.toUpperCase(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 🔹 BODY - Date, Time, Category
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(15),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Date and Time
-                  if (task.dueDate != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            '${task.dueDate!.toLocal().toString().split(' ')[0]}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Icon(Icons.access_time, size: 16, color: Colors.grey),
-                          SizedBox(width: 6),
-                          Text(
-                            TimeOfDay.fromDateTime(
-                              task.dueDate!,
-                            ).format(context),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Category
-                  Row(
-                    children: [
-                      Icon(Icons.category, size: 16, color: Colors.grey),
-                      SizedBox(width: 6),
-                      Text(
-                        task.category.toUpperCase(),
-                        style: TextStyle(fontSize: 13, color: Colors.grey[800]),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     //arrange the list according to dates
@@ -440,30 +337,274 @@ class _ToDoScreenState extends State<ToDoScreen>
           indicatorColor: Colors.white,
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            builder: (context) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                  top: 20,
-                  left: 16,
-                  right: 16,
-                ),
-                child: _buildAddTaskForm(),
-              );
-            },
-          );
-        },
-        backgroundColor: Colors.green,
-        child: Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
     // 🧱 Builds a single task tile with swipe actions
+    Widget _buildTaskTile(Task task) {
+      // Function to determine color based on priority
+
+      Color getCategoryColor(String category) {
+        switch (category.toLowerCase()) {
+          case 'work':
+            return Colors.blue;
+          case 'personal':
+            return Colors.purple;
+          case 'shopping':
+            return Colors.teal;
+          case 'other':
+            return Colors.grey;
+          default:
+            return Colors.black;
+        }
+      }
+
+      // Determine the color of the priority label based on its value
+      Color getPriorityColor(String priority) {
+        switch (priority) {
+          case 'high':
+            return Colors.red;
+          case 'medium':
+            return Colors.orange;
+          case 'low':
+            return Colors.green;
+          default:
+            return Colors.grey;
+        }
+      }
+
+      // Get this task's priority
+      final priority = task.priority ?? 'none';
+      return Dismissible(
+        key: Key(task.title + task.toString()), // Unique key
+        background: Container(
+          color: Colors.green,
+          alignment: Alignment.centerLeft,
+          padding: EdgeInsets.only(left: 20),
+          child: Icon(Icons.check, color: Colors.white),
+        ),
+        secondaryBackground: Container(
+          color: Colors.red,
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.only(right: 20),
+          child: Icon(Icons.delete, color: Colors.white),
+        ),
+
+        // Handle swipe confirmation
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.endToStart) {
+            // Confirm before deleting
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text('Delete Task'),
+                content: Text('Are you sure you want to delete this task?'),
+                actions: [
+                  TextButton(
+                    child: Text('Cancel'),
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                  ),
+                  TextButton(
+                    child: Text('Delete'),
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                  ),
+                ],
+              ),
+            );
+            return confirm ?? false;
+          } else {
+            // Mark as complete on swipe right
+            setState(() {
+              task.done = !task.done;
+              _saveTasks();
+            });
+            return false; // Don't dismiss the tile visually
+          }
+        },
+
+        // Actually remove task if deleted older version
+        // onDismissed: (direction) {
+        //   if (direction == DismissDirection.endToStart) {
+        //     setState(() {
+        //       _tasks.remove(task); // ✅ Correct way to remove by object
+        //     });
+        //     _saveTasks();
+        //     // _showDeleteAnimation(); // 👈 Show animation here
+        //   }
+        // },
+        child: Card(
+          elevation: 3,
+          margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Task Title
+                GestureDetector(
+                  onTap: () => _editTask(task),
+                  child: Text(
+                    task.title,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      decoration: task.done
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+
+                // Due Date and Time
+                if (task.dueDate != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          '${task.dueDate!.toLocal().toString().split(' ')[0]}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          TimeOfDay.fromDateTime(
+                            task.dueDate!.toLocal(),
+                          ).format(context),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Left: Filter Toggles
+                    Row(
+                      children: [
+                        // Today Only toggle
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _showTodayOnly = !_showTodayOnly;
+                            });
+                          },
+                          icon: Icon(
+                            _showTodayOnly ? Icons.today : Icons.view_agenda,
+                            color: Colors.blue,
+                          ),
+                          label: Text(
+                            _showTodayOnly ? 'Show All' : 'Today Only',
+                            style: TextStyle(color: Colors.blue),
+                          ),
+                        ),
+
+                        // Show/Hide Completed toggle
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _showCompleted = !_showCompleted;
+                            });
+                          },
+                          icon: Icon(
+                            _showCompleted
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.blue,
+                          ),
+                          label: Text(
+                            _showCompleted
+                                ? 'Hide Completed'
+                                : 'Show Completed',
+                            style: TextStyle(color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Right: Clear All Button
+                    if (_tasks.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () {
+                          if (_tasks.isEmpty) return;
+
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Clear All Tasks'),
+                                content: const Text(
+                                  'Do you want to delete ALL tasks?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(
+                                        context,
+                                      ).pop(); // Close the dialog first
+
+                                      setState(() {
+                                        _tasks.clear();
+                                      });
+                                      _saveTasks();
+
+                                      // Delay to ensure dialog is closed before showing animation
+                                      Future.delayed(
+                                        const Duration(milliseconds: 300),
+                                        () {
+                                          if (mounted)
+                                            _showClearAllDeleteAnimation();
+                                        },
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Clear All',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        label: Text(
+                          'Clear All',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     //collapse
     // Default: Show all tasks line 86
@@ -478,237 +619,34 @@ class _ToDoScreenState extends State<ToDoScreen>
 
   // Tab for adding new tasks
   Widget _buildAddTaskTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 🔹 Task input
-          TextField(
-            controller: _controller,
-            decoration: const InputDecoration(
-              labelText: 'Enter a task today',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // 🔹 Category dropdown
-          DropdownButtonFormField<String>(
-            value: _selectedCategory,
-            decoration: const InputDecoration(
-              labelText: 'Select Category',
-              border: OutlineInputBorder(),
-            ),
-            items: _categories.map((category) {
-              return DropdownMenuItem(
-                value: category,
-                child: Text(category.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedCategory = value!;
-              });
-            },
-          ),
-          const SizedBox(height: 10),
-
-          // 🔹 Priority dropdown
-          DropdownButtonFormField<String>(
-            value: _selectedPriority,
-            decoration: const InputDecoration(
-              labelText: 'Select Priority',
-              border: OutlineInputBorder(),
-            ),
-            items: ['low', 'medium', 'high'].map((priority) {
-              return DropdownMenuItem(
-                value: priority,
-                child: Text(priority.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedPriority = value!;
-              });
-            },
-          ),
-          const SizedBox(height: 10),
-
-          // 🔹 Add task button
-          // ElevatedButton(
-          //   onPressed: _handleAddTask,
-          //   style: ElevatedButton.styleFrom(
-          //     backgroundColor: Colors.green,
-          //     foregroundColor: Colors.white,
-          //     padding: const EdgeInsets.symmetric(vertical: 15),
-          //   ),
-          //   child: const Text('Add Task', style: TextStyle(fontSize: 18)),
-          // ),
-          const SizedBox(height: 10),
-
-          // 🔹 Clear all tasks button
-          ElevatedButton(
-            onPressed: _tasks.isEmpty
-                ? null
-                : () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Clear All Tasks'),
-                          content: const Text(
-                            'Do you want to delete ALL tasks?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _tasks.clear();
-                                });
-                                _saveTasks();
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text(
-                                'Clear All',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-            child: const Text(
-              'Clear All Tasks',
-              style: TextStyle(fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddTaskForm() {
-    TextEditingController _titleController = TextEditingController();
-    String selectedCategory = _selectedCategory;
-    String selectedPriority = _selectedPriority;
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Text(
-              "New Task",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          SizedBox(height: 12),
-
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(labelText: 'Task Title'),
-          ),
-          SizedBox(height: 12),
-
-          DropdownButtonFormField<String>(
-            value: selectedCategory,
-            decoration: InputDecoration(labelText: 'Category'),
-            items: _categories.map((cat) {
-              return DropdownMenuItem(
-                value: cat,
-                child: Text(cat.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (value) {
-              selectedCategory = value!;
-            },
-          ),
-          SizedBox(height: 12),
-
-          DropdownButtonFormField<String>(
-            value: selectedPriority,
-            decoration: InputDecoration(labelText: 'Priority'),
-            items: ['low', 'medium', 'high'].map((priority) {
-              return DropdownMenuItem(
-                value: priority,
-                child: Text(priority.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (value) {
-              selectedPriority = value!;
-            },
-          ),
-          SizedBox(height: 16),
-
-          Center(
-            child: ElevatedButton(
-              onPressed: () async {
-                if (_titleController.text.isEmpty) return;
-
-                // Get date
-                DateTime? selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(Duration(days: 365)),
-                );
-                if (selectedDate == null) return;
-
-                // Get time
-                TimeOfDay? selectedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (selectedTime == null) return;
-
-                // Combine date and time
-                final dueDate = DateTime(
-                  selectedDate.year,
-                  selectedDate.month,
-                  selectedDate.day,
-                  selectedTime.hour,
-                  selectedTime.minute,
-                );
-
-                // Add task
-                setState(() {
-                  _tasks.add(
-                    Task(
-                      title: _titleController.text,
-                      category: selectedCategory,
-                      priority: selectedPriority,
-                      dueDate: dueDate,
-                    ),
-                  );
-                });
-                _saveTasks();
-
-                Navigator.of(context).pop(); // Close sheet
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: Text(
+    return Center(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1.0, end: 1.05),
+        duration: Duration(seconds: 1),
+        curve: Curves.easeInOut,
+        builder: (context, scale, child) {
+          return Transform.scale(scale: scale, child: child);
+        },
+        onEnd: () {
+          // Loop the animation
+          setState(() {});
+        },
+        child: FloatingActionButton.large(
+          backgroundColor: Colors.green,
+          elevation: 8,
+          onPressed: _showAddTaskBottomSheet,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add, size: 28),
+              SizedBox(height: 6),
+              Text(
                 'Add Task',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.white),
               ),
-            ),
+            ],
           ),
-          SizedBox(height: 16),
-        ],
+        ),
       ),
     );
   }
@@ -809,6 +747,7 @@ class _ToDoScreenState extends State<ToDoScreen>
             padding: const EdgeInsets.symmetric(vertical: 5),
             child: TextField(
               controller: _searchController,
+
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value
@@ -835,6 +774,7 @@ class _ToDoScreenState extends State<ToDoScreen>
               ),
             ),
           ),
+          const SizedBox(height: 10),
 
           /// 🔹 TASK DISPLAY
           Expanded(
@@ -856,12 +796,53 @@ class _ToDoScreenState extends State<ToDoScreen>
                 return ListView(
                   children: [
                     if (pendingTasks.isNotEmpty) ...[
-                      const Text(
-                        'Pending Tasks',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Pending Tasks',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Clear Pending Tasks'),
+                                  content: Text(
+                                    'Are you sure you want to remove all pending tasks?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _tasks.removeWhere(
+                                            (task) => !task.done,
+                                          );
+                                        });
+                                        _saveTasks();
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text(
+                                        'Clear All',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Clear All',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       ...pendingTasks.asMap().entries.map((entry) {
@@ -874,10 +855,7 @@ class _ToDoScreenState extends State<ToDoScreen>
                       const SizedBox(height: 20),
                       const Text(
                         'Completed Tasks',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
                       ...completedTasks.asMap().entries.map((entry) {
@@ -892,6 +870,119 @@ class _ToDoScreenState extends State<ToDoScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTaskTile(Task task, int index) {
+    Color getPriorityColor(String priority) {
+      switch (priority) {
+        case 'high':
+          return Colors.red;
+        case 'medium':
+          return Colors.orange;
+        case 'low':
+          return Colors.green;
+        default:
+          return Colors.grey;
+      }
+    }
+
+    return Dismissible(
+      key: Key(task.title + task.dueDate.toString()),
+      background: Container(
+        color: Colors.green,
+        alignment: Alignment.centerLeft,
+        padding: EdgeInsets.only(left: 20),
+        child: Icon(Icons.check, color: Colors.white),
+      ),
+      secondaryBackground: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20),
+        child: Icon(Icons.delete, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text('Delete Task'),
+              content: Text('Are you sure you want to delete this task?'),
+              actions: [
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                ),
+                TextButton(
+                  child: Text('Delete'),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                ),
+              ],
+            ),
+          );
+          return confirm ?? false;
+        } else {
+          setState(() {
+            task.done = !task.done;
+            _saveTasks();
+          });
+          return false;
+        }
+      },
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          setState(() {
+            _tasks.removeAt(index);
+          });
+          _saveTasks();
+          _showDeleteAnimation(); // 🔥 Show animation
+        }
+      },
+      child: ListTile(
+        title: GestureDetector(
+          onTap: () => _editTask(task),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                task.title,
+                style: TextStyle(
+                  fontSize: 16,
+                  decoration: task.done
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                ),
+              ),
+              if (task.dueDate != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Date: ${task.dueDate!.toLocal().toString().split(' ')[0]}',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                    Text(
+                      'Time: ${TimeOfDay.fromDateTime(task.dueDate!.toLocal()).format(context)}',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              Text(
+                'Priority: ${task.priority.toUpperCase()}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: getPriorityColor(task.priority),
+                ),
+              ),
+              Text(
+                'Category: ${task.category.toUpperCase()}',
+                style: TextStyle(fontSize: 13, color: Colors.blueGrey),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -947,5 +1038,146 @@ class _ToDoScreenState extends State<ToDoScreen>
     });
 
     _saveTasks(); // Save to storage
+  }
+
+  void _addTask() async {
+    if (_titleController.text.isEmpty) return;
+
+    // 📅 Ask for a date
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+    );
+
+    if (selectedDate == null) return;
+
+    // 🕒 Ask for a time
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (selectedTime == null) return;
+
+    // ⏱ Combine both into a single DateTime
+    DateTime finalDueDate = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    // ✅ Create the new Task
+    final newTask = Task(
+      title: _titleController.text,
+      dueDate: finalDueDate,
+      priority: _selectedPriority,
+      category: _selectedCategory,
+      done: false,
+    );
+
+    setState(() {
+      _tasks.add(newTask);
+      _titleController.clear();
+    });
+
+    _saveTasks();
+    Navigator.of(context).pop(); // Close bottom sheet
+
+    // Show the animation safely after a short delay
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted) {
+        _showSuccessAnimation(context); // This handles closing the dialog
+      }
+    });
+  }
+
+  final List<String> _priorities = ['low', 'medium', 'high'];
+
+  void _showAddTaskBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 24,
+        ),
+        child: _buildTaskForm(),
+      ),
+    );
+  }
+
+  Widget _buildTaskForm() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          "Add New Task",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(height: 12),
+        TextField(
+          controller: _titleController,
+          decoration: InputDecoration(labelText: 'Enter a task today'),
+        ),
+        SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: _selectedCategory,
+          items: _categories.map((String category) {
+            return DropdownMenuItem<String>(
+              value: category,
+              child: Text(category),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedCategory = value!;
+            });
+          },
+          decoration: InputDecoration(labelText: 'Select Category'),
+        ),
+        SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: _selectedPriority,
+          items: _priorities.map((String priority) {
+            return DropdownMenuItem<String>(
+              value: priority,
+              child: Text(priority.toUpperCase()),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedPriority = value!;
+            });
+          },
+          decoration: InputDecoration(labelText: 'Select Priority'),
+        ),
+        SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _addTask,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: Text(
+            'Save Task',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        SizedBox(height: 12),
+      ],
+    );
   }
 }
