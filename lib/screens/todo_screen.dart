@@ -440,6 +440,28 @@ class _ToDoScreenState extends State<ToDoScreen>
           indicatorColor: Colors.white,
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (context) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  top: 20,
+                  left: 16,
+                  right: 16,
+                ),
+                child: _buildAddTaskForm(),
+              );
+            },
+          );
+        },
+        backgroundColor: Colors.green,
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
     // 🧱 Builds a single task tile with swipe actions
 
@@ -514,15 +536,15 @@ class _ToDoScreenState extends State<ToDoScreen>
           const SizedBox(height: 10),
 
           // 🔹 Add task button
-          ElevatedButton(
-            onPressed: _handleAddTask,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-            child: const Text('Add Task', style: TextStyle(fontSize: 18)),
-          ),
+          // ElevatedButton(
+          //   onPressed: _handleAddTask,
+          //   style: ElevatedButton.styleFrom(
+          //     backgroundColor: Colors.green,
+          //     foregroundColor: Colors.white,
+          //     padding: const EdgeInsets.symmetric(vertical: 15),
+          //   ),
+          //   child: const Text('Add Task', style: TextStyle(fontSize: 18)),
+          // ),
           const SizedBox(height: 10),
 
           // 🔹 Clear all tasks button
@@ -571,6 +593,121 @@ class _ToDoScreenState extends State<ToDoScreen>
               style: TextStyle(fontSize: 18),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddTaskForm() {
+    TextEditingController _titleController = TextEditingController();
+    String selectedCategory = _selectedCategory;
+    String selectedPriority = _selectedPriority;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              "New Task",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(height: 12),
+
+          TextField(
+            controller: _titleController,
+            decoration: InputDecoration(labelText: 'Task Title'),
+          ),
+          SizedBox(height: 12),
+
+          DropdownButtonFormField<String>(
+            value: selectedCategory,
+            decoration: InputDecoration(labelText: 'Category'),
+            items: _categories.map((cat) {
+              return DropdownMenuItem(
+                value: cat,
+                child: Text(cat.toUpperCase()),
+              );
+            }).toList(),
+            onChanged: (value) {
+              selectedCategory = value!;
+            },
+          ),
+          SizedBox(height: 12),
+
+          DropdownButtonFormField<String>(
+            value: selectedPriority,
+            decoration: InputDecoration(labelText: 'Priority'),
+            items: ['low', 'medium', 'high'].map((priority) {
+              return DropdownMenuItem(
+                value: priority,
+                child: Text(priority.toUpperCase()),
+              );
+            }).toList(),
+            onChanged: (value) {
+              selectedPriority = value!;
+            },
+          ),
+          SizedBox(height: 16),
+
+          Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                if (_titleController.text.isEmpty) return;
+
+                // Get date
+                DateTime? selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(Duration(days: 365)),
+                );
+                if (selectedDate == null) return;
+
+                // Get time
+                TimeOfDay? selectedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (selectedTime == null) return;
+
+                // Combine date and time
+                final dueDate = DateTime(
+                  selectedDate.year,
+                  selectedDate.month,
+                  selectedDate.day,
+                  selectedTime.hour,
+                  selectedTime.minute,
+                );
+
+                // Add task
+                setState(() {
+                  _tasks.add(
+                    Task(
+                      title: _titleController.text,
+                      category: selectedCategory,
+                      priority: selectedPriority,
+                      dueDate: dueDate,
+                    ),
+                  );
+                });
+                _saveTasks();
+
+                Navigator.of(context).pop(); // Close sheet
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text(
+                'Add Task',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
         ],
       ),
     );
