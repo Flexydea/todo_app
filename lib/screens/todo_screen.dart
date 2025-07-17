@@ -207,16 +207,21 @@ class _ToDoScreenState extends State<ToDoScreen>
 
                 // Category Dropdown
                 DropdownButtonFormField<String>(
-                  value: selectedCategory,
-                  decoration: InputDecoration(labelText: 'Category'),
-                  items: _categories.map((cat) {
+                  value: _selectedFilterCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Filter by Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['all', ..._categories].map((cat) {
                     return DropdownMenuItem(
-                      value: cat,
-                      child: Text(cat.toUpperCase()),
+                      value: cat, // Use raw lowercase value
+                      child: Text(cat.toUpperCase()), // Display uppercase only
                     );
                   }).toList(),
                   onChanged: (value) {
-                    selectedCategory = value!;
+                    setState(() {
+                      _selectedFilterCategory = value!;
+                    });
                   },
                 ),
                 SizedBox(height: 12),
@@ -655,8 +660,12 @@ class _ToDoScreenState extends State<ToDoScreen>
   // Tab for displaying tasks (pending + completed)
   Widget _buildTaskListTab() {
     // Separate tasks into pending and completed
-
-    final pendingTasks = _tasks.where((task) {
+    final visibleTasks = _selectedFilterCategory == 'all'
+        ? _tasks
+        : _tasks
+              .where((task) => task.category == _selectedFilterCategory)
+              .toList();
+    final pendingTasks = visibleTasks.where((task) {
       if (task.done) return false;
 
       final matchesSearch = task.title.toLowerCase().contains(_searchQuery);
@@ -672,7 +681,7 @@ class _ToDoScreenState extends State<ToDoScreen>
       return true;
     }).toList();
 
-    final completedTasks = _tasks.where((task) {
+    final completedTasks = visibleTasks.where((task) {
       if (!task.done) return false;
 
       final matchesSearch = task.title.toLowerCase().contains(_searchQuery);
