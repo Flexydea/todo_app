@@ -40,9 +40,9 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(
         255,
-        42,
-        104,
-        34,
+        13,
+        70,
+        31,
       ), // Deep blue like screenshot
       body: Center(
         child: Column(
@@ -53,6 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: const Color.fromARGB(255, 13, 70, 31), // Hexagon blue
+
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.notes, size: 50, color: Colors.white),

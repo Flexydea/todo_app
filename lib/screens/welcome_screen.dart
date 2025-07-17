@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app/screens/login_screen.dart';
+import 'package:todo_app/screens/signup_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -33,7 +35,10 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Navigate to Login screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   // backgroundColor: const Color.fromARGB(255, 127, 200, 129),
@@ -47,7 +52,10 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               OutlinedButton(
                 onPressed: () {
-                  // TODO: Navigate to Sign Up screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.white),
