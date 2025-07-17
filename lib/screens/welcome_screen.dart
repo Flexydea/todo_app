@@ -8,9 +8,11 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevent resizing issues
       backgroundColor: const Color.fromARGB(255, 13, 70, 31),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
+          // ✅ wrap in scroll view
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -34,20 +36,26 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(
+                    255,
+                    6,
+                    11,
+                    7,
+                  ), // Or any contrasting color
+                  foregroundColor: Colors.white, // Text/icon color
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  // backgroundColor: const Color.fromARGB(255, 127, 200, 129),
-                  minimumSize: Size(double.infinity, 50),
-                ),
-                child: const Text(
-                  'Log In',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
+                child: const Text('Log In', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 16),
               OutlinedButton(
@@ -58,8 +66,8 @@ class WelcomeScreen extends StatelessWidget {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.white),
-                  minimumSize: Size(double.infinity, 50),
+                  side: const BorderSide(color: Colors.white),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
                 child: const Text(
                   'Sign Up',

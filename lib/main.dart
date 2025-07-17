@@ -40,6 +40,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _isDarkMode = !_isDarkMode;
     });
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('darkMode', _isDarkMode);
   }
@@ -48,8 +49,9 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: _isDarkMode ? ThemeData.dark() : ThemeData.light(),
-      // home: ToDoScreen(isDarkMode: _isDarkMode, onToggleTheme: _toggleTheme),
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light, // ← dynamic!
       home: SplashScreen(isDarkMode: _isDarkMode, onToggleTheme: _toggleTheme),
       debugShowCheckedModeBanner: false,
     );

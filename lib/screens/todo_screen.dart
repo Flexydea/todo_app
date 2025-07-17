@@ -11,7 +11,7 @@ class ToDoScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
   // String _selectedCategory = 'personal'; // default category
 
-  ToDoScreen({required this.isDarkMode, required this.onToggleTheme});
+  const ToDoScreen({required this.isDarkMode, required this.onToggleTheme});
 
   @override
   _ToDoScreenState createState() => _ToDoScreenState();
@@ -320,8 +320,8 @@ class _ToDoScreenState extends State<ToDoScreen>
         backgroundColor: Colors.green,
         actions: [
           IconButton(
-            icon: Icon(widget.isDarkMode ? Icons.dark_mode : Icons.light_mode),
-            onPressed: widget.onToggleTheme,
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.onToggleTheme, // <-- make sure this is passed in
           ),
         ],
       ),
