@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:todo_app/screens/login_screen.dart';
+import 'package:todo_app/screens/todo_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -21,6 +23,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _handleSignUp() async {
+    // Show Lottie success dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          height: 150,
+          child: Lottie.asset('assets/animations/success_check.json'),
+        ),
+      ),
+    );
+
+    // Delay, then close animation and navigate
+    await Future.delayed(Duration(seconds: 2));
+
+    if (mounted) {
+      Navigator.of(context).pop(); // Close animation
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ToDoScreen(
+            isDarkMode: false, // or retrieve from SharedPreferences
+            onToggleTheme: () {}, // provide actual toggle if needed
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> showSuccessAnimation(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: SizedBox(
+          height: 150,
+          child: Lottie.asset('assets/animations/success_check.json'),
+        ),
+      ),
+    );
+
+    // Wait and pop animation
+    await Future.delayed(const Duration(seconds: 2));
+    if (context.mounted) Navigator.of(context).pop();
   }
 
   void _submitForm() {
@@ -116,7 +167,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: _submitForm,
+                    onPressed: _handleSignUp,
                     child: const Text(
                       'Sign Up',
                       style: TextStyle(fontSize: 16, color: Colors.white),

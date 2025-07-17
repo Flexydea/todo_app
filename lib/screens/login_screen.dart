@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_app/screens/signup_screen.dart';
+import 'package:lottie/lottie.dart';
+import 'package:todo_app/screens/todo_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -24,13 +26,51 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       // You can add authentication logic here
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login successful!'),
-          duration: Duration(seconds: 2),
+
+      _showLoginSuccessDialog(context); // 👈 This triggers the Lottie animation
+    }
+  }
+
+  void _showLoginSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                'assets/animations/success_check.json',
+                width: 120,
+                repeat: false,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Login Successful!',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.of(context).pop(); // Close success dialog
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ToDoScreen(
+            isDarkMode: false, // You can pass the real value if needed
+            onToggleTheme: () {}, // Add real callback if you have it
+          ),
         ),
       );
-    }
+    });
   }
 
   @override
@@ -116,7 +156,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Colors.green,
                     ),
                     onPressed: _handleLogin,
                     child: const Text(
