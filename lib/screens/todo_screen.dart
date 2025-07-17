@@ -63,7 +63,7 @@ class _ToDoScreenState extends State<ToDoScreen>
       barrierDismissible: false,
       builder: (_) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: const Color.fromARGB(255, 42, 104, 34),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

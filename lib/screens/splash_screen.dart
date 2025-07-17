@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app/screens/welcome_screen.dart';
+import 'package:todo_app/screens/todo_screen.dart';
 import 'dart:async';
-import 'todo_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -21,13 +22,13 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    Timer(Duration(seconds: 3), () {
+    Timer(Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => ToDoScreen(
-            isDarkMode: widget.isDarkMode,
-            onToggleTheme: widget.onToggleTheme,
+          builder: (_) => WelcomeScreen(
+            // isDarkMode: widget.isDarkMode,
+            // onToggleTheme: widget.onToggleTheme,
           ),
         ),
       );
@@ -37,7 +38,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1120), // Deep blue like screenshot
+      backgroundColor: const Color.fromARGB(
+        255,
+        42,
+        104,
+        34,
+      ), // Deep blue like screenshot
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -46,14 +52,14 @@ class _SplashScreenState extends State<SplashScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E3A8A), // Hexagon blue
+                color: const Color.fromARGB(255, 13, 70, 31), // Hexagon blue
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.bar_chart, size: 50, color: Colors.white),
+              child: Icon(Icons.notes, size: 50, color: Colors.white),
             ),
             const SizedBox(height: 20),
             const Text(
-              'To do list',
+              'F-secure',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 22,
