@@ -14,14 +14,14 @@ class HomeTabsScreen extends StatefulWidget {
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
 
+  final List<String> _titles = ['Categories', 'Calendar', 'Tasks', 'Profile'];
+
   final List<Widget> _screens = const [
     CategoryScreen(),
-    TasksScreen(),
     CalendarScreen(),
+    TasksScreen(),
     ProfileScreen(),
   ];
-
-  final List<String> _titles = ['Categories', 'Tasks', 'Calendar', 'Profile'];
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +53,11 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
             icon: Icon(Icons.dashboard),
             label: 'Categories',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tasks'),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Calendar',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tasks'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

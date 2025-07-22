@@ -13,8 +13,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const CategoryScreen(),
-    Center(child: Text('Tasks')), // To be replaced
     Center(child: Text('Calendar')), // To be replaced
+    Center(child: Text('Tasks')), // To be replaced
     Center(child: Text('Profile')), // To be replaced
   ];
 
@@ -41,11 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle_outline),
-            label: 'Tasks',
+            label: 'Calendar',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
-            label: 'Calendar',
+            label: 'Tasks',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
