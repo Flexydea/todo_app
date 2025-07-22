@@ -29,6 +29,14 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications_none), // Bell outline
+            onPressed: () {
+              // You can define a function or leave it empty for now
+            },
+          ),
+        ],
       ),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
