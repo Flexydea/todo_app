@@ -15,10 +15,10 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
 
   final List<String> _titles = ['Categories', 'Calendar', 'Profile'];
 
-  final List<Widget> _screens = const [
+  final List<Widget> _screens = [
     CategoryScreen(),
-    CalendarScreen(),
-    ProfileScreen(),
+    const CalendarScreen(),
+    const ProfileScreen(),
   ];
 
   @override

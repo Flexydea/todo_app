@@ -10,6 +10,6 @@ class CategoryModel {
     required this.title,
     required this.icon,
     required this.color,
-    required this.taskCount,
+    this.taskCount = 0,
   });
 }

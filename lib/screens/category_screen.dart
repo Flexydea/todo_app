@@ -1,10 +1,23 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_app/data/sample_categories.dart';
+import 'package:todo_app/screens/task_list_screen.dart';
 import 'package:todo_app/widgets/category_card.dart';
 import 'package:todo_app/screens/category_screen.dart';
+import 'package:todo_app/models/category_model.dart';
 
 class CategoryScreen extends StatelessWidget {
-  const CategoryScreen({super.key});
+  CategoryScreen({super.key});
+  // final List<CategoryModel> categories = [
+  //   CategoryModel(title: 'Work', icon: Icons.work, color: Colors.blue),
+  //   CategoryModel(title: 'Personal', icon: Icons.person, color: Colors.orange),
+  //   CategoryModel(
+  //     title: 'Shopping',
+  //     icon: Icons.shopping_cart,
+  //     color: Colors.green,
+  //   ),
+  //   CategoryModel(title: 'Urgent', icon: Icons.warning, color: Colors.red),
+  // ];
 
   @override
   Widget build(BuildContext context) {
@@ -15,11 +28,25 @@ class CategoryScreen extends StatelessWidget {
           itemCount: sampleCategories.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            mainAxisSpacing: 16,
             crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
           ),
           itemBuilder: (context, index) {
-            return CategoryCard(category: sampleCategories[index]);
+            final category = sampleCategories[index];
+
+            return CategoryCard(
+              category: category,
+              totalTasks: category.taskCount,
+              completedTasks: 0, // or set a dummy number if needed
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TaskListScreen(category: category),
+                  ),
+                );
+              },
+            );
           },
         ),
       ),
