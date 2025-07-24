@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'category_screen.dart';
-import 'tasks_screen.dart';
 import 'calendar_screen.dart';
 import 'profile_screen.dart';
 
@@ -14,12 +13,11 @@ class HomeTabsScreen extends StatefulWidget {
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
 
-  final List<String> _titles = ['Categories', 'Calendar', 'Tasks', 'Profile'];
+  final List<String> _titles = ['Categories', 'Calendar', 'Profile'];
 
   final List<Widget> _screens = const [
     CategoryScreen(),
     CalendarScreen(),
-    TasksScreen(),
     ProfileScreen(),
   ];
 
@@ -57,7 +55,6 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
             icon: Icon(Icons.calendar_today),
             label: 'Calendar',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tasks'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
