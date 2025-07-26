@@ -29,7 +29,7 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
         backgroundColor: Colors.green,
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_none), // Bell outline
+            icon: Icon(Icons.notifications), // Bell outline
             onPressed: () {
               // You can define a function or leave it empty for now
             },
