@@ -3,28 +3,14 @@ import 'package:lottie/lottie.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:todo_app/models/task_model.dart';
 import 'package:intl/intl.dart';
+import 'package:todo_app/models/calendar_model.dart';
+import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({Key? key}) : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
-}
-
-class Calendar {
-  final String title;
-  final DateTime date;
-  final TimeOfDay time;
-  final String category;
-  bool done;
-
-  Calendar({
-    required this.title,
-    required this.date,
-    required this.time,
-    required this.category,
-    this.done = false,
-  });
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
@@ -71,7 +57,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
 
-    // Auto close after animation plays
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
@@ -79,7 +64,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
-  // Simple Task model
   final List<Calendar> _tasks = [
     Calendar(
       title: 'Meeting with team',
@@ -87,7 +71,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       time: TimeOfDay(hour: 10, minute: 30),
       category: 'Work',
     ),
-
     Calendar(
       title: 'morning prayer',
       date: DateTime.now().add(Duration(days: 1)),
@@ -95,13 +78,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
       category: 'Personal',
     ),
   ];
+
   final Map<String, IconData> _categoryIcons = {
     'Work': Icons.work,
     'Personal': Icons.person,
     'Shopping': Icons.shopping_cart,
     'Urgent': Icons.warning,
   };
-  // monthly calender picker
+
   Widget _buildToggleTabs() {
     return Container(
       height: 40,
@@ -157,7 +141,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  // monthly calender picker
   Widget _buildMonthlyCalendar() {
     return TableCalendar(
       focusedDay: _selectedDate,
@@ -181,14 +164,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  // daily picker
   Widget _buildDailyPicker() {
     return SizedBox(
       height: 90,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: 30, // next 30 days
+        itemCount: 30,
         itemBuilder: (context, index) {
           final date = DateTime.now().add(Duration(days: index));
           final isSelected =
@@ -217,9 +199,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     DateFormat('dd').format(date),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? const Color.fromARGB(255, 0, 0, 0)
-                          : const Color.fromARGB(255, 0, 0, 0),
+                      color: const Color.fromARGB(255, 0, 0, 0),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -227,9 +207,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     DateFormat('MMM').format(date),
                     style: TextStyle(
                       fontSize: 12,
-                      color: isSelected
-                          ? const Color.fromARGB(255, 0, 0, 0)
-                          : const Color.fromARGB(255, 0, 0, 0),
+                      color: const Color.fromARGB(255, 0, 0, 0),
                     ),
                   ),
                 ],
@@ -248,12 +226,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           task.date.month == _selectedDate.month &&
           task.date.day == _selectedDate.day;
     }).toList();
+
     return Column(
       children: [
-        // // Toggle
         _buildToggleTabs(),
         isMonthly ? _buildMonthlyCalendar() : _buildDailyPicker(),
-
         const SizedBox(height: 40),
         Align(
           alignment: Alignment.center,
@@ -266,9 +243,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
         ),
-
         const SizedBox(height: 16),
-        //task list
         Expanded(
           child: ListView.builder(
             itemCount: tasksForSelectedDate.length,
@@ -331,6 +306,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                     subtitle: Text('${task.time.format(context)}'),
+                    onTap: () async {
+                      final updatedTask = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditCalendarTaskScreen(
+                            task: task,
+                            onSave: (updatedTask) {
+                              setState(() {
+                                _tasks[index] = updatedTask;
+                              });
+                            },
+                          ),
+                        ),
+                      );
+
+                      if (updatedTask != null) {
+                        setState(() {
+                          _tasks[index] = updatedTask;
+                        });
+                      }
+                    },
                     trailing: Icon(Icons.notifications),
                   ),
                 ),
