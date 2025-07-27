@@ -14,7 +14,14 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
   String? _selectedCategory;
   List<Widget> get _screens => [
-    CategoryScreen(onCategoryTap: _handleCategoryTap),
+    CategoryScreen(
+      onCategoryTap: (selectedCategory) {
+        setState(() {
+          _selectedCategory = selectedCategory;
+          _currentIndex = 1; // Switch to calendar tab
+        });
+      },
+    ),
     CalendarScreen(initialCategory: _selectedCategory),
     const ProfileScreen(),
   ];
@@ -39,16 +46,39 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
           });
         },
       ),
-      CalendarScreen(initialCategory: _selectedCategory),
+      CalendarScreen(
+        initialCategory: _selectedCategory,
+        onClearFilter: () {
+          setState(() {
+            _selectedCategory = null;
+          });
+        },
+      ),
       const ProfileScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
+        leading: _currentIndex == 1 && _selectedCategory != null
+            ? IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _selectedCategory = null; // Clear the category filter
+                    _currentIndex = 0; // Switch back to Categories tab
+                  });
+                },
+              )
+            : null,
         title: Text(_titles[_currentIndex]),
         backgroundColor: Colors.green,
         actions: [
-          IconButton(icon: Icon(Icons.notifications), onPressed: () {}),
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              // Optional action
+            },
+          ),
         ],
       ),
       body: _screens[_currentIndex],
@@ -57,9 +87,18 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (_currentIndex == index &&
+              index == 1 &&
+              _selectedCategory != null) {
+            // Calendar tab re-tapped while filter is active
+            setState(() {
+              _selectedCategory = null; // Clear filter
+            });
+          } else {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
         },
         items: const [
           BottomNavigationBarItem(

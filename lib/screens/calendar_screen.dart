@@ -8,8 +8,10 @@ import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   final String? initialCategory;
+  final VoidCallback? onClearFilter;
 
-  const CalendarScreen({Key? key, this.initialCategory}) : super(key: key);
+  const CalendarScreen({Key? key, this.initialCategory, this.onClearFilter})
+    : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
