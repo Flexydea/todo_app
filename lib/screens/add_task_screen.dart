@@ -133,7 +133,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Save Task'),
+                child: const Text(
+                  'Save Task',
+                  style: TextStyle(
+                    backgroundColor: Colors.green,
+                    color: Colors.black,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ],
           ),

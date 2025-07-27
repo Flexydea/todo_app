@@ -5,6 +5,7 @@ import 'package:todo_app/models/task_model.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
+import 'package:todo_app/services/notification_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   final List<Calendar> tasks;
@@ -325,13 +326,56 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ); // Get real index
 
                         if (direction == DismissDirection.endToStart) {
+                          final deletedTask =
+                              task; // Save the task before deletion
+
                           _showDeleteAnimation(context);
                           await Future.delayed(
                             const Duration(milliseconds: 600),
                           );
+
                           setState(() {
                             _tasks.removeAt(actualIndex);
                           });
+
+                          // Show SnackBar with Undo
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Colors.black87,
+                              elevation: 6,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 20,
+                              ),
+                              content: const Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.white),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Task deleted',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              duration: const Duration(seconds: 4),
+                              action: SnackBarAction(
+                                label: 'UNDO',
+                                textColor: Colors.green,
+                                onPressed: () {
+                                  setState(() {
+                                    _tasks.insert(actualIndex, deletedTask);
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+
                           return true;
                         } else if (direction == DismissDirection.startToEnd) {
                           setState(() {
@@ -347,6 +391,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         }
                         return false;
                       },
+
                       child: Card(
                         margin: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -388,7 +433,64 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               });
                             }
                           },
-                          trailing: Icon(Icons.notifications),
+                          trailing: IconButton(
+                            icon: Icon(Icons.notifications),
+                            onPressed: () async {
+                              final pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+
+                              if (pickedTime != null) {
+                                final scheduledDateTime = DateTime(
+                                  task.date.year,
+                                  task.date.month,
+                                  task.date.day,
+                                  pickedTime.hour,
+                                  pickedTime.minute,
+                                );
+
+                                // await NotificationService.scheduleNotification(
+                                //   id: task.hashCode,
+                                //   title: 'Task Reminder',
+                                //   body: task.title,
+                                //   scheduledTime: scheduledDateTime,
+                                // );
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.black87,
+                                    elevation: 6,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 20,
+                                    ),
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.alarm,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Reminder set for ${pickedTime.format(context)}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ),
                     );

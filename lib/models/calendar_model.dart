@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class Calendar {
   final String title;
   final DateTime date;
-  final TimeOfDay time;
+  TimeOfDay time;
   final bool done;
   final String category;
 
