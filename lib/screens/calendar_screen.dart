@@ -254,18 +254,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tasksForSelectedDate = _tasks.where((task) {
-      final isSameDate =
-          task.date.year == _selectedDate.year &&
-          task.date.month == _selectedDate.month &&
-          task.date.day == _selectedDate.day;
+    final tasksForSelectedDate = _tasks
+        .where((task) {
+          final isSameDate =
+              task.date.year == _selectedDate.year &&
+              task.date.month == _selectedDate.month &&
+              task.date.day == _selectedDate.day;
 
-      final matchesCategory =
-          widget.initialCategory == null ||
-          task.category == widget.initialCategory;
+          final matchesCategory =
+              widget.initialCategory == null ||
+              task.category == widget.initialCategory;
 
-      return isSameDate && matchesCategory;
-    }).toList();
+          return isSameDate && matchesCategory;
+        })
+        .toList()
+        .reversed
+        .toList();
 
     return Column(
       children: [

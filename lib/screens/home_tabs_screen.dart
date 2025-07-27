@@ -52,6 +52,11 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
           _currentIndex = 1;
         });
       },
+      onTaskAdded: (newTask) {
+        setState(() {
+          _tasks.add(newTask);
+        });
+      },
     ),
     CalendarScreen(
       tasks: _tasks,
