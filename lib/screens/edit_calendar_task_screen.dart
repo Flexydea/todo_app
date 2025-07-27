@@ -62,6 +62,14 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
         title: Text('Edit Task'),
         backgroundColor: Colors.green,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications), // Bell outline
+            onPressed: () {
+              // You can define a function or leave it empty for now
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),

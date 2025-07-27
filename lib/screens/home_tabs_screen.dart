@@ -12,28 +12,43 @@ class HomeTabsScreen extends StatefulWidget {
 
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
-
-  final List<String> _titles = ['Categories', 'Calendar', 'Profile'];
-
-  final List<Widget> _screens = [
-    CategoryScreen(),
-    const CalendarScreen(),
+  String? _selectedCategory;
+  List<Widget> get _screens => [
+    CategoryScreen(onCategoryTap: _handleCategoryTap),
+    CalendarScreen(initialCategory: _selectedCategory),
     const ProfileScreen(),
   ];
 
+  void _handleCategoryTap(String category) {
+    setState(() {
+      _selectedCategory = category;
+      _currentIndex = 1;
+    });
+  }
+
+  final List<String> _titles = ['Categories', 'Calendar', 'Profile'];
+
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _screens = [
+      CategoryScreen(
+        onCategoryTap: (selectedCategory) {
+          setState(() {
+            _selectedCategory = selectedCategory;
+            _currentIndex = 1; // Switch to calendar tab
+          });
+        },
+      ),
+      CalendarScreen(initialCategory: _selectedCategory),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),
         backgroundColor: Colors.green,
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications), // Bell outline
-            onPressed: () {
-              // You can define a function or leave it empty for now
-            },
-          ),
+          IconButton(icon: Icon(Icons.notifications), onPressed: () {}),
         ],
       ),
       body: _screens[_currentIndex],

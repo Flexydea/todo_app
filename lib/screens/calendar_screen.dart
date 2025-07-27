@@ -7,7 +7,9 @@ import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  final String? initialCategory;
+
+  const CalendarScreen({Key? key, this.initialCategory}) : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -20,11 +22,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _selectedDate = DateTime.now();
   DateTime selectedDate = DateTime.now();
 
+  late String _filteredCategory;
+
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+
+    // Apply category filter if passed
+    if (widget.initialCategory != null) {
+      _selectedCategory = widget.initialCategory!;
+    }
   }
+
+  String? _selectedCategory;
 
   void _showDeleteAnimation(BuildContext context) {
     showDialog(
@@ -73,9 +84,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
     ),
     Calendar(
       title: 'morning prayer',
-      date: DateTime.now().add(Duration(days: 1)),
+      date: DateTime.now(),
+      // date: DateTime.now().add(Duration(days: 1)),
       time: TimeOfDay(hour: 17, minute: 0),
       category: 'Personal',
+    ),
+    Calendar(
+      title: 'Afternoon prayer',
+      date: DateTime.now(),
+      time: TimeOfDay(hour: 17, minute: 0),
+      category: 'Shopping',
+    ),
+    Calendar(
+      title: 'Midnight prayer',
+      date: DateTime.now(),
+      time: TimeOfDay(hour: 17, minute: 0),
+      category: 'Urgent',
     ),
   ];
 
@@ -222,9 +246,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final tasksForSelectedDate = _tasks.where((task) {
-      return task.date.year == _selectedDate.year &&
+      final isSameDate =
+          task.date.year == _selectedDate.year &&
           task.date.month == _selectedDate.month &&
           task.date.day == _selectedDate.day;
+
+      final matchesCategory =
+          widget.initialCategory == null ||
+          task.category == widget.initialCategory;
+
+      return isSameDate && matchesCategory;
     }).toList();
 
     return Column(
@@ -245,94 +276,107 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: ListView.builder(
-            itemCount: tasksForSelectedDate.length,
-            itemBuilder: (context, index) {
-              final task = tasksForSelectedDate[index];
-              return Dismissible(
-                key: Key('${task.title}-${task.date.toIso8601String()}'),
-                direction: DismissDirection.horizontal,
-                background: Container(
-                  color: Colors.green,
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 20),
-                  child: const Icon(Icons.check, color: Colors.white),
-                ),
-                secondaryBackground: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                confirmDismiss: (direction) async {
-                  if (direction == DismissDirection.endToStart) {
-                    _showDeleteAnimation(context);
-                    await Future.delayed(const Duration(milliseconds: 600));
-                    setState(() {
-                      _tasks.removeAt(index);
-                    });
-                    return true;
-                  } else if (direction == DismissDirection.startToEnd) {
-                    setState(() {
-                      _tasks[index] = Calendar(
-                        title: task.title,
-                        date: task.date,
-                        time: task.time,
-                        done: !task.done,
-                        category: task.category,
-                      );
-                    });
-                    return false;
-                  }
-                  return false;
-                },
-                child: Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+          child: tasksForSelectedDate.isEmpty
+              ? Center(
+                  child: Text(
+                    'No tasks today',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
                   ),
-                  elevation: 2,
-                  child: ListTile(
-                    leading: Icon(
-                      _categoryIcons[task.category] ?? Icons.label,
-                      color: _getCategoryColor(task.category),
-                    ),
-                    title: Text(
-                      task.title,
-                      style: TextStyle(
-                        decoration: task.done
-                            ? TextDecoration.lineThrough
-                            : null,
+                )
+              : ListView.builder(
+                  itemCount: tasksForSelectedDate.length,
+                  itemBuilder: (context, index) {
+                    final task = tasksForSelectedDate[index];
+                    return Dismissible(
+                      key: Key('${task.title}-${task.date.toIso8601String()}'),
+                      direction: DismissDirection.horizontal,
+                      background: Container(
+                        color: Colors.green,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(left: 20),
+                        child: const Icon(Icons.check, color: Colors.white),
                       ),
-                    ),
-                    subtitle: Text('${task.time.format(context)}'),
-                    onTap: () async {
-                      final updatedTask = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditCalendarTaskScreen(
-                            task: task,
-                            onSave: (updatedTask) {
+                      secondaryBackground: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) async {
+                        if (direction == DismissDirection.endToStart) {
+                          _showDeleteAnimation(context);
+                          await Future.delayed(
+                            const Duration(milliseconds: 600),
+                          );
+                          setState(() {
+                            _tasks.removeAt(index);
+                          });
+                          return true;
+                        } else if (direction == DismissDirection.startToEnd) {
+                          setState(() {
+                            _tasks[index] = Calendar(
+                              title: task.title,
+                              date: task.date,
+                              time: task.time,
+                              done: !task.done,
+                              category: task.category,
+                            );
+                          });
+                          return false;
+                        }
+                        return false;
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        elevation: 2,
+                        child: ListTile(
+                          leading: Icon(
+                            _categoryIcons[task.category] ?? Icons.label,
+                            color: _getCategoryColor(task.category),
+                          ),
+                          title: Text(
+                            task.title,
+                            style: TextStyle(
+                              decoration: task.done
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                          subtitle: Text('${task.time.format(context)}'),
+                          onTap: () async {
+                            final updatedTask = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EditCalendarTaskScreen(
+                                  task: task,
+                                  onSave: (updatedTask) {
+                                    setState(() {
+                                      _tasks[index] = updatedTask;
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+
+                            if (updatedTask != null) {
                               setState(() {
                                 _tasks[index] = updatedTask;
                               });
-                            },
-                          ),
+                            }
+                          },
+                          trailing: Icon(Icons.notifications),
                         ),
-                      );
-
-                      if (updatedTask != null) {
-                        setState(() {
-                          _tasks[index] = updatedTask;
-                        });
-                      }
-                    },
-                    trailing: Icon(Icons.notifications),
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
