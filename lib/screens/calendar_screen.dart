@@ -442,6 +442,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               );
 
                               if (pickedTime != null) {
+                                final now = DateTime.now();
+
                                 final scheduledDateTime = DateTime(
                                   task.date.year,
                                   task.date.month,
@@ -450,12 +452,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   pickedTime.minute,
                                 );
 
-                                // await NotificationService.scheduleNotification(
-                                //   id: task.hashCode,
-                                //   title: 'Task Reminder',
-                                //   body: task.title,
-                                //   scheduledTime: scheduledDateTime,
-                                // );
+                                // Prevent past scheduling
+                                if (scheduledDateTime.isBefore(now)) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                        'Please pick a future time.',
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                await NotificationService.scheduleNotification(
+                                  id: task.hashCode,
+                                  title: 'Task Reminder',
+                                  body: task.title,
+                                  scheduledTime: scheduledDateTime,
+                                );
 
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -472,7 +488,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     content: Row(
                                       children: [
                                         const Icon(
-                                          Icons.alarm,
+                                          Icons.notifications_active,
                                           color: Colors.white,
                                         ),
                                         const SizedBox(width: 12),
