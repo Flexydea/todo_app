@@ -6,11 +6,18 @@ import 'package:todo_app/screens/task_list_screen.dart';
 import 'package:todo_app/widgets/category_card.dart';
 import 'package:todo_app/screens/category_screen.dart';
 import 'package:todo_app/models/category_model.dart';
+import 'package:todo_app/models/calendar_model.dart';
 
 class CategoryScreen extends StatelessWidget {
-  final Function(String category) onCategoryTap;
+  final List<Calendar> tasks;
+  final Function(String) onCategoryTap;
 
-  const CategoryScreen({super.key, required this.onCategoryTap});
+  const CategoryScreen({
+    super.key,
+    required this.tasks,
+    required this.onCategoryTap,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,10 +33,19 @@ class CategoryScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final category = sampleCategories[index];
 
+            // Filter tasks for this category
+            final tasksForCategory = tasks
+                .where((task) => task.category == category.title)
+                .toList();
+            final totalTasks = tasksForCategory.length;
+            final completedTasks = tasksForCategory
+                .where((task) => task.done)
+                .length;
+
             return CategoryCard(
               category: category,
-              totalTasks: category.taskCount,
-              completedTasks: 0,
+              totalTasks: totalTasks,
+              completedTasks: completedTasks,
               onTap: () => onCategoryTap(category.title),
             );
           },

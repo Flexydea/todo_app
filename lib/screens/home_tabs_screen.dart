@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app/models/calendar_model.dart';
 import 'category_screen.dart';
 import 'calendar_screen.dart';
 import 'profile_screen.dart';
@@ -13,16 +14,54 @@ class HomeTabsScreen extends StatefulWidget {
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
   String? _selectedCategory;
+
+  // ✅ Task list
+  final List<Calendar> _tasks = [
+    Calendar(
+      title: 'Meeting with team',
+      date: DateTime.now(),
+      time: TimeOfDay(hour: 10, minute: 30),
+      category: 'Work',
+    ),
+    Calendar(
+      title: 'morning prayer',
+      date: DateTime.now(),
+      time: TimeOfDay(hour: 17, minute: 0),
+      category: 'Personal',
+    ),
+    Calendar(
+      title: 'Afternoon prayer',
+      date: DateTime.now(),
+      time: TimeOfDay(hour: 17, minute: 0),
+      category: 'Shopping',
+    ),
+    Calendar(
+      title: 'Midnight prayer',
+      date: DateTime.now(),
+      time: TimeOfDay(hour: 17, minute: 0),
+      category: 'Urgent',
+    ),
+  ];
+
   List<Widget> get _screens => [
     CategoryScreen(
+      tasks: _tasks,
       onCategoryTap: (selectedCategory) {
         setState(() {
           _selectedCategory = selectedCategory;
-          _currentIndex = 1; // Switch to calendar tab
+          _currentIndex = 1;
         });
       },
     ),
-    CalendarScreen(initialCategory: _selectedCategory),
+    CalendarScreen(
+      tasks: _tasks,
+      initialCategory: _selectedCategory,
+      onClearFilter: () {
+        setState(() {
+          _selectedCategory = null;
+        });
+      },
+    ),
     const ProfileScreen(),
   ];
 
@@ -37,26 +76,6 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _screens = [
-      CategoryScreen(
-        onCategoryTap: (selectedCategory) {
-          setState(() {
-            _selectedCategory = selectedCategory;
-            _currentIndex = 1; // Switch to calendar tab
-          });
-        },
-      ),
-      CalendarScreen(
-        initialCategory: _selectedCategory,
-        onClearFilter: () {
-          setState(() {
-            _selectedCategory = null;
-          });
-        },
-      ),
-      const ProfileScreen(),
-    ];
-
     return Scaffold(
       appBar: AppBar(
         leading: _currentIndex == 1 && _selectedCategory != null

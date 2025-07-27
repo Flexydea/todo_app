@@ -7,11 +7,16 @@ import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
+  final List<Calendar> tasks;
   final String? initialCategory;
   final VoidCallback? onClearFilter;
 
-  const CalendarScreen({Key? key, this.initialCategory, this.onClearFilter})
-    : super(key: key);
+  const CalendarScreen({
+    super.key,
+    required this.tasks,
+    this.initialCategory,
+    this.onClearFilter,
+  });
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -26,14 +31,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   late String _filteredCategory;
 
+  late List<Calendar> _tasks;
+
   @override
   void initState() {
     super.initState();
+    _tasks = widget.tasks;
     _selectedDay = _focusedDay;
 
-    // Apply category filter if passed
     if (widget.initialCategory != null) {
-      _selectedCategory = widget.initialCategory!;
+      // Optional: you can filter or highlight based on category
     }
   }
 
@@ -77,7 +84,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
-  final List<Calendar> _tasks = [
+  final List<Calendar> tasks = [
     Calendar(
       title: 'Meeting with team',
       date: DateTime.now(),
@@ -309,18 +316,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
                       confirmDismiss: (direction) async {
+                        final actualIndex = _tasks.indexOf(
+                          task,
+                        ); // Get real index
+
                         if (direction == DismissDirection.endToStart) {
                           _showDeleteAnimation(context);
                           await Future.delayed(
                             const Duration(milliseconds: 600),
                           );
                           setState(() {
-                            _tasks.removeAt(index);
+                            _tasks.removeAt(actualIndex);
                           });
                           return true;
                         } else if (direction == DismissDirection.startToEnd) {
                           setState(() {
-                            _tasks[index] = Calendar(
+                            _tasks[actualIndex] = Calendar(
                               title: task.title,
                               date: task.date,
                               time: task.time,
