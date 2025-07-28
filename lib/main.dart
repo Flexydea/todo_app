@@ -26,8 +26,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        cardColor: Colors.white,
+        textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.black)),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
+        cardColor: Colors.grey[900],
+        textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.white)),
+      ),
       home: const HomeTabsScreen(),
     );
   }

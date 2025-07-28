@@ -187,14 +187,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
       onDaySelected: (selectedDay, _) {
         setState(() => _selectedDate = selectedDay);
       },
-      calendarStyle: const CalendarStyle(
-        todayDecoration: BoxDecoration(
+      calendarStyle: CalendarStyle(
+        todayDecoration: const BoxDecoration(
           color: Colors.green,
           shape: BoxShape.circle,
         ),
-        selectedDecoration: BoxDecoration(
+        selectedDecoration: const BoxDecoration(
           color: Colors.green,
           shape: BoxShape.circle,
+        ),
+        outsideTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors
+                    .white54 // Light grey in dark mode
+              : Colors.grey[500],
+        ),
+        defaultTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
+        ),
+        weekendTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white70
+              : Colors.black87,
         ),
       ),
       headerStyle: HeaderStyle(formatButtonVisible: false, titleCentered: true),
@@ -236,7 +252,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     DateFormat('dd').format(date),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: const Color.fromARGB(255, 0, 0, 0),
+                      color: isSelected
+                          ? Colors.white
+                          : Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -244,7 +264,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     DateFormat('MMM').format(date),
                     style: TextStyle(
                       fontSize: 12,
-                      color: const Color.fromARGB(255, 0, 0, 0),
+                      color: isSelected
+                          ? Colors.white
+                          : Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : Colors.black,
                     ),
                   ),
                 ],
@@ -284,10 +308,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           alignment: Alignment.center,
           child: Text(
             DateFormat('dd MMM yyyy').format(_selectedDate).toUpperCase(),
-            style: TextStyle(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: Color.fromARGB(255, 0, 0, 0),
             ),
           ),
         ),

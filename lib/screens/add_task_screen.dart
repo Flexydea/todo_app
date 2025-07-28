@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todo_app/models/calendar_model.dart'; // adjust if needed
+import 'package:todo_app/models/calendar_model.dart';
 import 'package:intl/intl.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -59,6 +59,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Task'),
@@ -71,25 +73,30 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           child: ListView(
             children: [
               const SizedBox(height: 16),
-              const SizedBox(height: 6),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                style: theme.textTheme.bodyLarge,
+                decoration: InputDecoration(
                   labelText: "Task Title",
-                  border: OutlineInputBorder(),
+                  labelStyle: theme.textTheme.labelLarge,
+                  border: const OutlineInputBorder(),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: theme.cardColor,
                 ),
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Enter a title' : null,
               ),
               const SizedBox(height: 16),
-              const SizedBox(height: 6),
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
+                style: theme.textTheme.bodyLarge,
+                dropdownColor: theme.cardColor,
                 items: _categories
                     .map(
-                      (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                      (cat) => DropdownMenuItem(
+                        value: cat,
+                        child: Text(cat, style: theme.textTheme.bodyLarge),
+                      ),
                     )
                     .toList(),
                 onChanged: (value) {
@@ -97,13 +104,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     setState(() => _selectedCategory = value);
                   }
                 },
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Category',
-                  border: OutlineInputBorder(),
+                  labelStyle: theme.textTheme.labelLarge,
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: theme.cardColor,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Time'),
+              Text('Time', style: theme.textTheme.bodyLarge),
               const SizedBox(height: 6),
               GestureDetector(
                 onTap: _pickTime,
@@ -111,11 +121,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                   ),
-                  child: Text(_selectedTime.format(context)),
+                  child: Text(
+                    _selectedTime.format(context),
+                    style: theme.textTheme.bodyLarge,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Date'),
+              Text('Date', style: theme.textTheme.bodyLarge),
               const SizedBox(height: 6),
               GestureDetector(
                 onTap: _pickDate,
@@ -123,7 +136,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                   ),
-                  child: Text(DateFormat.yMMMd().format(_selectedDate)),
+                  child: Text(
+                    DateFormat.yMMMd().format(_selectedDate),
+                    style: theme.textTheme.bodyLarge,
+                  ),
                 ),
               ),
               const SizedBox(height: 30),
@@ -135,11 +151,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 ),
                 child: const Text(
                   'Save Task',
-                  style: TextStyle(
-                    backgroundColor: Colors.green,
-                    color: Colors.black,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.black, fontSize: 16),
                 ),
               ),
             ],

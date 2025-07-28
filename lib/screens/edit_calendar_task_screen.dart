@@ -30,18 +30,6 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
     _selectedCategory = widget.task.category;
   }
 
-  void _pickTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
   void _saveChanges() {
     final updatedTask = Calendar(
       title: _titleController.text,
@@ -56,19 +44,17 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Color(0xFFFDF3FE),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Edit Task'),
+        title: const Text('Edit Task'),
         backgroundColor: Colors.green,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications), // Bell outline
-            onPressed: () {
-              // You can define a function or leave it empty for now
-            },
-          ),
+          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
         ],
       ),
       body: Padding(
@@ -78,19 +64,20 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
           children: [
             TextFormField(
               controller: _titleController,
+              style: theme.textTheme.bodyLarge,
               decoration: InputDecoration(
                 labelText: "Task Title",
-                border: OutlineInputBorder(),
+                labelStyle: theme.textTheme.labelLarge,
+                border: const OutlineInputBorder(),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: theme.cardColor,
               ),
             ),
             const SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Time:', style: TextStyle(fontSize: 16)),
+                Text('Time:', style: theme.textTheme.bodyLarge),
                 Row(
                   children: [
                     Text(
@@ -124,10 +111,18 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
+              style: theme.textTheme.bodyLarge,
+              dropdownColor: theme.cardColor,
+              decoration: InputDecoration(
+                labelText: 'Category',
+                labelStyle: theme.textTheme.labelLarge,
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: theme.cardColor,
+              ),
               items: _categories.map((category) {
                 return DropdownMenuItem<String>(
                   value: category,
@@ -139,18 +134,11 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
                   _selectedCategory = value!;
                 });
               },
-              decoration: InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.white,
-              ),
             ),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 onPressed: _saveChanges,
-                child: const Text("Save Changes"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.black,
@@ -163,6 +151,7 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
                   ),
                   elevation: 4,
                 ),
+                child: const Text("Save Changes"),
               ),
             ),
           ],

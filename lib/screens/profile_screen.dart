@@ -1,95 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_app/theme/theme_notifier.dart'; // Add this import
+import 'package:todo_app/theme/theme_notifier.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      // Body with scrollable content
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildProfileHeader(), // User avatar and name/email
+            _buildProfileHeader(textTheme),
             const SizedBox(height: 20),
 
-            const Text(
+            Text(
               "Statistics",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
 
-            _buildStatisticsCards(), // Two stat cards: Total and Completed tasks
+            _buildStatisticsCards(theme, textTheme),
             const SizedBox(height: 20),
 
-            const Text(
+            Text(
               "Settings",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
 
-            _buildSettings(context), // Notification, Sound, Language
+            _buildSettings(context, textTheme),
           ],
         ),
       ),
     );
   }
 
-  // Profile header with avatar, name, and email
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(TextTheme textTheme) {
     return Center(
       child: Column(
-        children: const [
-          CircleAvatar(
+        children: [
+          const CircleAvatar(
             radius: 40,
-            child: Icon(
-              Icons.person,
-              size: 40,
-              color: Colors.green,
-            ), // Placeholder avatar
+            child: Icon(Icons.person, size: 40, color: Colors.green),
           ),
-          SizedBox(height: 10),
-          Text("John Williams", style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
           Text(
-            "johnwilliams@gmail.com",
-            style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+            "John Williams",
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
+          Text("johnwilliams@gmail.com", style: textTheme.bodySmall),
         ],
       ),
     );
   }
 
-  // Cards showing statistics: total and completed tasks
-  Widget _buildStatisticsCards() {
+  Widget _buildStatisticsCards(ThemeData theme, TextTheme textTheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildStatCard("Total tasks", "100", Icons.show_chart),
-        _buildStatCard("Completed tasks", "20", Icons.check_circle_outline),
+        _buildStatCard(
+          "Total tasks",
+          "100",
+          Icons.show_chart,
+          theme,
+          textTheme,
+        ),
+        _buildStatCard(
+          "Completed tasks",
+          "20",
+          Icons.check_circle_outline,
+          theme,
+          textTheme,
+        ),
       ],
     );
   }
 
-  // Reusable method to build a stat card
-  Widget _buildStatCard(String label, String value, IconData icon) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    ThemeData theme,
+    TextTheme textTheme,
+  ) {
     return Expanded(
       child: Card(
+        color: theme.cardColor,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              Icon(icon, size: 32), // Icon at the top
+              Icon(icon, size: 32, color: theme.colorScheme.primary),
               const SizedBox(height: 8),
-              Text(label), // e.g., Total tasks
+              Text(label, style: textTheme.bodyMedium),
               Text(
                 value,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ), // e.g., 100
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),
@@ -97,54 +118,30 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Helper to build each tab item
-  Widget _buildProgressTab(String label, {required bool isActive}) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        color: isActive ? Colors.blue : Colors.white,
-        fontSize: 16,
-      ),
-    );
-  }
-
-  // Settings section
-  Widget _buildSettings(BuildContext context) {
+  Widget _buildSettings(BuildContext context, TextTheme textTheme) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
     return Column(
       children: [
         ListTile(
-          title: const Text("Dark Mode"),
+          title: Text("Dark Mode", style: textTheme.bodyMedium),
           trailing: Switch(
             value: themeNotifier.isDarkMode,
-            onChanged: (val) {
-              themeNotifier.toggleTheme(val);
-            },
+            onChanged: (val) => themeNotifier.toggleTheme(val),
           ),
         ),
-        const ListTile(title: Text("Notifications"), trailing: Text("On")),
-        const ListTile(title: Text("Sound"), trailing: Text("On")),
-        const ListTile(title: Text("Language"), trailing: Text("English")),
-      ],
-    );
-  }
-}
-
-// Static placeholder for Month / Week / Year toggle
-class TabBarPlaceholder extends StatelessWidget {
-  const TabBarPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        Text("Month", style: TextStyle(color: Colors.blue)),
-        SizedBox(width: 20),
-        Text("Week"),
-        SizedBox(width: 20),
-        Text("Year"),
+        ListTile(
+          title: Text("Notifications", style: textTheme.bodyMedium),
+          trailing: Text("On", style: textTheme.bodySmall),
+        ),
+        ListTile(
+          title: Text("Sound", style: textTheme.bodyMedium),
+          trailing: Text("On", style: textTheme.bodySmall),
+        ),
+        ListTile(
+          title: Text("Language", style: textTheme.bodyMedium),
+          trailing: Text("English", style: textTheme.bodySmall),
+        ),
       ],
     );
   }

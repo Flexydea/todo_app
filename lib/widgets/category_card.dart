@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/models/category_model.dart';
-import 'package:todo_app/screens/task_list_screen.dart'; // Make sure to import this
 
 class CategoryCard extends StatelessWidget {
   final CategoryModel category;
@@ -18,9 +17,13 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Card(
+        color: theme.cardColor,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
@@ -32,15 +35,22 @@ class CategoryCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 category.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 6),
               LinearProgressIndicator(
                 value: totalTasks == 0 ? 0 : completedTasks / totalTasks,
+                backgroundColor: theme.dividerColor.withOpacity(0.2),
+                valueColor: AlwaysStoppedAnimation<Color>(category.color),
               ),
+              const SizedBox(height: 6),
               Text(
-                '$completedTasks of $totalTasks  completed',
-                style: const TextStyle(color: Colors.black),
+                '$completedTasks of $totalTasks completed',
+                style: textTheme.bodySmall?.copyWith(
+                  color: theme.textTheme.bodySmall?.color,
+                ),
               ),
             ],
           ),
