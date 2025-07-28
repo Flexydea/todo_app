@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_app/services/notification_service.dart';
+import 'theme/theme_notifier.dart';
 import 'screens/home_tabs_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init(); // initialize notifications
-  runApp(const MyApp());
+  await NotificationService.init();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,9 +21,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomeTabsScreen(),
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
+      themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: const HomeTabsScreen(),
     );
   }
 }

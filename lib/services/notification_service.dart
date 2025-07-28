@@ -13,6 +13,7 @@ class NotificationService {
       _scheduledReminders;
 
   static Future<void> init() async {
+    tzData.initializeTimeZones();
     // iOS Settings
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -81,6 +82,7 @@ class NotificationService {
       'time': scheduledTime,
       'category': category,
     });
+    print("Reminder added: $_scheduledReminders");
   }
 
   static Future<void> cancelNotification(int id) async {

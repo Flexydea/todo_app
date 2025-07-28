@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; // Add this import
+import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/theme/theme_notifier.dart'; // Add this import
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -31,7 +33,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            _buildSettings(), // Notification, Sound, Language
+            _buildSettings(context), // Notification, Sound, Language
           ],
         ),
       ),
@@ -108,12 +110,23 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // Settings section
-  Widget _buildSettings() {
+  Widget _buildSettings(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return Column(
-      children: const [
-        ListTile(title: Text("Notifications"), trailing: Text("On")),
-        ListTile(title: Text("Sound"), trailing: Text("On")),
-        ListTile(title: Text("Language"), trailing: Text("English")),
+      children: [
+        ListTile(
+          title: const Text("Dark Mode"),
+          trailing: Switch(
+            value: themeNotifier.isDarkMode,
+            onChanged: (val) {
+              themeNotifier.toggleTheme(val);
+            },
+          ),
+        ),
+        const ListTile(title: Text("Notifications"), trailing: Text("On")),
+        const ListTile(title: Text("Sound"), trailing: Text("On")),
+        const ListTile(title: Text("Language"), trailing: Text("English")),
       ],
     );
   }
