@@ -1,12 +1,13 @@
-// lib/models/calendar_model.dart
 import 'package:flutter/material.dart';
 
 class Calendar {
   final String title;
   final DateTime date;
-  TimeOfDay time;
+  final TimeOfDay time;
   final bool done;
   final String category;
+  final int notificationId;
+  final TimeOfDay? reminderTime;
 
   Calendar({
     required this.title,
@@ -14,7 +15,9 @@ class Calendar {
     required this.time,
     this.done = false,
     this.category = 'Work',
-  });
+    this.reminderTime,
+    int? notificationId,
+  }) : notificationId = notificationId ?? DateTime.now().millisecondsSinceEpoch;
 
   Calendar copyWith({
     String? title,
@@ -22,6 +25,8 @@ class Calendar {
     TimeOfDay? time,
     bool? done,
     String? category,
+    TimeOfDay? reminderTime,
+    int? notificationId,
   }) {
     return Calendar(
       title: title ?? this.title,
@@ -29,6 +34,8 @@ class Calendar {
       time: time ?? this.time,
       done: done ?? this.done,
       category: category ?? this.category,
+      reminderTime: reminderTime ?? this.reminderTime,
+      notificationId: notificationId ?? this.notificationId,
     );
   }
 }

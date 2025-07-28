@@ -1,28 +1,31 @@
+// lib/services/notification_service.dart
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzData;
 
 class NotificationService {
-  // Singleton
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  /// 1. Call this in main() to initialize everything
+  static final List<Map<String, dynamic>> _scheduledReminders = [];
+
+  static List<Map<String, dynamic>> get scheduledReminders =>
+      _scheduledReminders;
+
   static Future<void> init() async {
-    // iOS settings
+    // iOS Settings
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
-          requestSoundPermission: true,
-          requestBadgePermission: true,
           requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
         );
 
-    // Android settings
+    // Android Settings
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Overall init settings
+    // Combine both into InitializationSettings
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
@@ -31,16 +34,23 @@ class NotificationService {
     // Initialize timezones
     tzData.initializeTimeZones();
 
-    // Final init
+    // Initialize the plugin
     await _notificationsPlugin.initialize(initSettings);
+
+    // Optional: explicitly request permissions for iOS
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  /// 2. Schedule a reminder notification
   static Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledTime,
+    required String category,
   }) async {
     await _notificationsPlugin.zonedSchedule(
       id,
@@ -49,9 +59,9 @@ class NotificationService {
       tz.TZDateTime.from(scheduledTime, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'todo_reminders', // channel ID
-          'Task Reminders', // channel name
-          channelDescription: 'Notifications for task reminders',
+          'todo_reminders',
+          'Task Reminders',
+          channelDescription: 'Task Reminder Notifications',
           importance: Importance.high,
           priority: Priority.high,
         ),
@@ -61,15 +71,25 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
+
+    // Prevent duplicates
+    _scheduledReminders.removeWhere((r) => r['id'] == id);
+
+    _scheduledReminders.add({
+      'id': id,
+      'body': body,
+      'time': scheduledTime,
+      'category': category,
+    });
   }
 
-  /// 3. Cancel a specific notification
   static Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
+    _scheduledReminders.removeWhere((r) => r['id'] == id);
   }
 
-  /// 4. Cancel all notifications
   static Future<void> cancelAll() async {
     await _notificationsPlugin.cancelAll();
+    _scheduledReminders.clear();
   }
 }

@@ -6,18 +6,21 @@ import 'package:intl/intl.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 import 'package:todo_app/services/notification_service.dart';
+import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   final List<Calendar> tasks;
   final String? initialCategory;
   final VoidCallback? onClearFilter;
+  final VoidCallback? onReminderChanged;
 
   const CalendarScreen({
-    super.key,
+    Key? key,
     required this.tasks,
     this.initialCategory,
     this.onClearFilter,
-  });
+    this.onReminderChanged,
+  }) : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -336,8 +339,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
                           setState(() {
                             _tasks.removeAt(actualIndex);
-                          });
 
+                            // Cancel the system notification
+                            NotificationService.cancelNotification(
+                              task.notificationId,
+                            );
+
+                            // Remove it from upcoming reminders list
+                            NotificationService.scheduledReminders.removeWhere(
+                              (reminder) =>
+                                  reminder['id'] == task.notificationId,
+                            );
+                            // Trigger parent to update badge
+                            if (widget.onReminderChanged != null) {
+                              widget.onReminderChanged!();
+                            }
+                          });
                           // Show SnackBar with Undo
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -419,18 +436,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 builder: (_) => EditCalendarTaskScreen(
                                   task: task,
                                   onSave: (updatedTask) {
-                                    setState(() {
-                                      _tasks[index] = updatedTask;
-                                    });
+                                    final actualIndex = _tasks.indexOf(
+                                      task,
+                                    ); // ✅ Get real index
+                                    if (actualIndex != -1) {
+                                      setState(() {
+                                        _tasks[actualIndex] = updatedTask;
+                                      });
+
+                                      // ✅ Refresh badge if needed
+                                      if (widget.onReminderChanged != null) {
+                                        widget.onReminderChanged!();
+                                      }
+                                    }
                                   },
                                 ),
                               ),
                             );
 
                             if (updatedTask != null) {
-                              setState(() {
-                                _tasks[index] = updatedTask;
-                              });
+                              final actualIndex = _tasks.indexOf(
+                                task,
+                              ); // ✅ Again double-check
+                              if (actualIndex != -1) {
+                                setState(() {
+                                  _tasks[actualIndex] = updatedTask;
+                                });
+
+                                // ✅ Also trigger badge refresh here
+                                if (widget.onReminderChanged != null) {
+                                  widget.onReminderChanged!();
+                                }
+                              }
                             }
                           },
                           trailing: IconButton(
@@ -465,13 +502,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   );
                                   return;
                                 }
+                                final notificationId = DateTime.now()
+                                    .millisecondsSinceEpoch
+                                    .remainder(100000);
 
                                 await NotificationService.scheduleNotification(
-                                  id: task.hashCode,
+                                  id: notificationId,
                                   title: 'Task Reminder',
                                   body: task.title,
                                   scheduledTime: scheduledDateTime,
+                                  category: task.category,
                                 );
+
+                                // Update your task with notificationId
+                                final updatedTask = task.copyWith(
+                                  reminderTime: pickedTime,
+                                  notificationId: notificationId,
+                                );
+                                // Replace in task list
+                                setState(() {
+                                  final index = _tasks.indexOf(task);
+                                  if (index != -1) _tasks[index] = updatedTask;
+                                });
 
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
