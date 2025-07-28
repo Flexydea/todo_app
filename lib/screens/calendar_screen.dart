@@ -303,7 +303,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       children: [
         _buildToggleTabs(),
         isMonthly ? _buildMonthlyCalendar() : _buildDailyPicker(),
+
+        const Divider(thickness: 4),
         const SizedBox(height: 40),
+
         Align(
           alignment: Alignment.center,
           child: Text(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/theme/theme_notifier.dart';
+import 'package:todo_app/widgets/account_section.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -16,22 +16,21 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildProfileHeader(textTheme),
+            //Account section at the top
+            const AccountSection(),
             const SizedBox(height: 20),
-
             Text(
               "Statistics",
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
-
+            const SizedBox(height: 20),
             _buildStatisticsCards(theme, textTheme),
             const SizedBox(height: 20),
-
+            // Settings
             Text(
               "Settings",
               style: textTheme.titleMedium?.copyWith(
@@ -39,29 +38,26 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-
             _buildSettings(context, textTheme),
+            const SizedBox(height: 20),
+            // Account options
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text("Account Settings"),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                // TODO: Navigate to settings page
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text("Logout"),
+              onTap: () {
+                // TODO: Handle logout logic
+              },
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader(TextTheme textTheme) {
-    return Center(
-      child: Column(
-        children: [
-          const CircleAvatar(
-            radius: 40,
-            child: Icon(Icons.person, size: 40, color: Colors.green),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "John Williams",
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          Text("johnwilliams@gmail.com", style: textTheme.bodySmall),
-        ],
       ),
     );
   }
@@ -121,28 +117,12 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildSettings(BuildContext context, TextTheme textTheme) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
-    return Column(
-      children: [
-        ListTile(
-          title: Text("Dark Mode", style: textTheme.bodyMedium),
-          trailing: Switch(
-            value: themeNotifier.isDarkMode,
-            onChanged: (val) => themeNotifier.toggleTheme(val),
-          ),
-        ),
-        ListTile(
-          title: Text("Notifications", style: textTheme.bodyMedium),
-          trailing: Text("On", style: textTheme.bodySmall),
-        ),
-        ListTile(
-          title: Text("Sound", style: textTheme.bodyMedium),
-          trailing: Text("On", style: textTheme.bodySmall),
-        ),
-        ListTile(
-          title: Text("Language", style: textTheme.bodyMedium),
-          trailing: Text("English", style: textTheme.bodySmall),
-        ),
-      ],
+    return ListTile(
+      title: Text("Dark Mode", style: textTheme.bodyMedium),
+      trailing: Switch(
+        value: themeNotifier.isDarkMode,
+        onChanged: (val) => themeNotifier.toggleTheme(val),
+      ),
     );
   }
 }
