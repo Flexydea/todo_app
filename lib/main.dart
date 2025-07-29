@@ -5,6 +5,8 @@ import 'theme/theme_notifier.dart';
 import 'screens/home_tabs_screen.dart';
 
 void main() async {
+  debugPrint("✅ App started");
+
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
 
