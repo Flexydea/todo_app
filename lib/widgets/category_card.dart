@@ -6,6 +6,7 @@ class CategoryCard extends StatelessWidget {
   final int totalTasks;
   final int completedTasks;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress; // optional
 
   const CategoryCard({
     super.key,
@@ -13,6 +14,7 @@ class CategoryCard extends StatelessWidget {
     required this.totalTasks,
     required this.completedTasks,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -22,6 +24,7 @@ class CategoryCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress, // Delegate long press to parent
       child: Card(
         color: theme.cardColor,
         elevation: 2,
@@ -48,9 +51,7 @@ class CategoryCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 '$completedTasks of $totalTasks completed',
-                style: textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color,
-                ),
+                style: textTheme.bodySmall,
               ),
             ],
           ),
