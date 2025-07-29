@@ -98,11 +98,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.add,
-                          size: 40,
-                          color: theme.colorScheme.primary,
-                        ),
+                        Icon(Icons.add, size: 40, color: Colors.green),
                         const SizedBox(height: 10),
                         Text(
                           "Create Category",

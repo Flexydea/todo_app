@@ -545,10 +545,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   reminderTime: pickedTime,
                                   notificationId: notificationId,
                                 );
-                                // Replace in task list
+
                                 setState(() {
                                   final index = _tasks.indexOf(task);
-                                  if (index != -1) _tasks[index] = updatedTask;
+                                  if (index != -1) {
+                                    _tasks[index] = updatedTask;
+
+                                    // Also update the original task list to avoid stale data
+                                    final widgetIndex = widget.tasks.indexOf(
+                                      task,
+                                    );
+                                    if (widgetIndex != -1) {
+                                      widget.tasks[widgetIndex] = updatedTask;
+                                    }
+                                  }
+
+                                  // ✅ Notify parent if needed (for upcoming reminders screen or badge refresh)
+                                  if (widget.onReminderChanged != null) {
+                                    widget.onReminderChanged!();
+                                  }
                                 });
 
                                 ScaffoldMessenger.of(context).showSnackBar(
