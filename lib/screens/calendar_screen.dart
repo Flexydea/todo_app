@@ -305,7 +305,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         isMonthly ? _buildMonthlyCalendar() : _buildDailyPicker(),
 
         const Divider(thickness: 4),
-        const SizedBox(height: 40),
+        const SizedBox(height: 12),
 
         Align(
           alignment: Alignment.center,
@@ -371,7 +371,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               task.notificationId,
                             );
 
-                            // Remove it from upcoming reminders list
+                            // // Remove it from upcoming reminders list
                             NotificationService.scheduledReminders.removeWhere(
                               (reminder) =>
                                   reminder['id'] == task.notificationId,

@@ -72,7 +72,7 @@ class _UpcomingRemindersScreenState extends State<UpcomingRemindersScreen> {
                     // Delay to let animation play fully
                     await Future.delayed(const Duration(seconds: 2));
 
-                    // ✅ Remove from list AFTER animation completes
+                    // Remove from list AFTER animation completes
                     setState(() {
                       NotificationService.scheduledReminders.removeWhere(
                         (r) => r['id'] == id,
