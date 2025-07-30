@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:todo_app/services/notification_service.dart';
 import 'theme/theme_notifier.dart';
 import 'screens/home_tabs_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'models/task_model.dart';
 
 void main() async {
-  debugPrint("✅ App started");
-
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
 

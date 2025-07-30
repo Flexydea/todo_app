@@ -1,13 +1,24 @@
-// File: lib/models/task_model.dart
+import 'package:hive/hive.dart';
 
-class Task {
+part 'task_model.g.dart'; // This will be generated automatically
+
+@HiveType(typeId: 0)
+class Task extends HiveObject {
+  @HiveField(0)
   String title;
+
+  @HiveField(1)
   bool done;
+
+  @HiveField(2)
   DateTime? dueDate;
+
+  @HiveField(3)
   String priority;
+
+  @HiveField(4)
   String category;
 
-  // Constructor with default values for category and priority
   Task({
     required this.title,
     this.done = false,
@@ -16,7 +27,6 @@ class Task {
     this.category = 'personal',
   });
 
-  // Convert a Task object to a Map (for saving to storage)
   Map<String, dynamic> toJson() {
     return {
       'title': title,
@@ -27,14 +37,11 @@ class Task {
     };
   }
 
-  // Factory constructor to create a Task from a Map (when loading)
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      title: json['title'],
-      done: json['done'],
-      dueDate: json['dueDate'] != null && json['dueDate'] != ''
-          ? DateTime.tryParse(json['dueDate'])
-          : null,
+      title: json['title'] ?? '',
+      done: json['done'] ?? false,
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
       priority: json['priority'] ?? 'medium',
       category: json['category'] ?? 'personal',
     );
