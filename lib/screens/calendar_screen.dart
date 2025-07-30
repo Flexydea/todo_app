@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:todo_app/models/task_model.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
