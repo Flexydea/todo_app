@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/models/calendar_model.dart';
+import 'package:todo_app/services/notification_service.dart';
 
 class EditCalendarTaskScreen extends StatefulWidget {
   final Calendar task;
@@ -26,18 +27,38 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
-    _selectedTime = widget.task.time;
+    _selectedTime = widget.task.parsedTime;
     _selectedCategory = widget.task.category;
   }
 
-  void _saveChanges() {
+  void _saveChanges() async {
     final updatedTask = Calendar(
       title: _titleController.text,
       date: widget.task.date,
       time: _selectedTime,
       category: _selectedCategory,
       done: widget.task.done,
+      notificationId: widget.task.notificationId, // make sure this is passed
     );
+
+    // Cancel existing reminder
+    await NotificationService.cancelNotification(widget.task.notificationId);
+
+    // Schedule new one
+    await NotificationService.scheduleNotification(
+      id: updatedTask.notificationId,
+      title: updatedTask.title,
+      body: 'Reminder for ${updatedTask.title}',
+      scheduledTime: DateTime(
+        updatedTask.date.year,
+        updatedTask.date.month,
+        updatedTask.date.day,
+        updatedTask.parsedTime.hour,
+        updatedTask.parsedTime.minute,
+      ),
+      category: updatedTask.category,
+    );
+
     widget.onSave(updatedTask);
     Navigator.pop(context);
   }

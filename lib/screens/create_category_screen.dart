@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/models/category_model.dart';
-import 'package:todo_app/data/sample_categories.dart';
+import 'package:hive/hive.dart';
 
 class CreateCategoryScreen extends StatefulWidget {
   const CreateCategoryScreen({super.key});
@@ -34,6 +34,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
 
   void _createCategory() {
     final title = _titleController.text.trim();
+
     if (title.isEmpty || _selectedIcon == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter title and choose an icon.')),
@@ -41,16 +42,26 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
       return;
     }
 
-    // Add to sampleCategories
-    final newCategory = CategoryModel(
+    final categoryBox = Hive.box<Category>('categoryBox');
+
+    final exists = categoryBox.values.any(
+      (c) => c.title.trim().toLowerCase() == title.toLowerCase(),
+    );
+
+    if (exists) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Category already exists')));
+      return;
+    }
+
+    final newCategory = Category(
       title: title,
       icon: _selectedIcon!,
       color: _selectedColor,
     );
 
-    // sampleCategories.add(newCategory); // Add to list
-
-    Navigator.pop(context, newCategory); // Go back to CategoryScreen
+    Navigator.pop(context, newCategory);
   }
 
   @override

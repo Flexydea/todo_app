@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:todo_app/data/sample_categories.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/models/category_model.dart';
+import 'package:todo_app/providers/selected_category_provider.dart';
 import 'package:todo_app/screens/add_task_screen.dart';
 import 'package:todo_app/screens/create_category_screen.dart';
 import 'package:todo_app/widgets/category_card.dart';
@@ -8,22 +11,31 @@ import 'package:todo_app/models/category_model.dart';
 import 'package:todo_app/models/calendar_model.dart';
 
 class CategoryScreen extends StatefulWidget {
-  final List<Calendar> tasks;
-  final void Function(Calendar task) onTaskAdded;
+  // final List<Calendar> tasks;
+  // final void Function(Calendar task) onTaskAdded;
   final void Function(String category) onCategoryTap;
 
-  const CategoryScreen({
-    super.key,
-    required this.tasks,
-    required this.onTaskAdded,
-    required this.onCategoryTap,
-  });
+  // const CategoryScreen({
+  //   super.key,
+  //   required this.tasks,
+  //   required this.onTaskAdded,
+  //   required this.onCategoryTap,
+  // });
+  const CategoryScreen({super.key, required this.onCategoryTap});
 
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
+  late Box<Category> _categoryBox;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryBox = Hive.box<Category>('categoryBox');
+  }
+
   void _confirmDelete(BuildContext context, String title) {
     final isDefault = [
       'Work',
@@ -32,6 +44,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
       'Urgent',
     ].contains(title);
     if (isDefault) return;
+
+    final box = Hive.box<Category>('categoryBox');
+
+    // 🔁 Find the key directly instead of relying on index
+    final keyToDelete = box.keys.firstWhere(
+      (key) => box.get(key)?.title == title,
+      orElse: () => null,
+    );
+
+    if (keyToDelete == null) return;
 
     showDialog(
       context: context,
@@ -45,9 +67,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
           TextButton(
             onPressed: () {
-              setState(() {
-                sampleCategories.removeWhere((c) => c.title == title);
-              });
+              box.delete(keyToDelete); // ✅ Use key here
               Navigator.pop(context);
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -65,70 +85,104 @@ class _CategoryScreenState extends State<CategoryScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          itemCount: sampleCategories.length + 1,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemBuilder: (context, index) {
-            if (index == sampleCategories.length) {
-              return GestureDetector(
-                onTap: () async {
-                  final newCategory = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateCategoryScreen(),
-                    ),
-                  );
+        child: ValueListenableBuilder<Box<Calendar>>(
+          valueListenable: Hive.box<Calendar>('calendarBox').listenable(),
+          builder: (context, calendarBox, _) {
+            return ValueListenableBuilder<Box<Category>>(
+              valueListenable: Hive.box<Category>('categoryBox').listenable(),
+              builder: (context, categoryBox, _) {
+                final categories = categoryBox.values.toList();
 
-                  if (newCategory != null && newCategory is CategoryModel) {
-                    setState(() {
-                      sampleCategories.add(newCategory);
-                    });
-                  }
-                },
-                child: Card(
-                  color: theme.cardColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                return GridView.builder(
+                  itemCount: categories.length + 1,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
                   ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 40, color: Colors.green),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Create Category",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: theme.textTheme.bodyLarge?.color,
+                  itemBuilder: (context, index) {
+                    if (index == categories.length) {
+                      return GestureDetector(
+                        onTap: () async {
+                          final newCategory = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CreateCategoryScreen(),
+                            ),
+                          );
+
+                          if (newCategory != null && newCategory is Category) {
+                            final exists = categoryBox.values.any(
+                              (c) =>
+                                  c.title.trim().toLowerCase() ==
+                                  newCategory.title.trim().toLowerCase(),
+                            );
+
+                            if (exists) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Category already exists'),
+                                ),
+                              );
+                            } else {
+                              categoryBox.add(newCategory);
+                            }
+                          }
+                        },
+                        child: Card(
+                          color: theme.cardColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, size: 40, color: Colors.green),
+                                const SizedBox(height: 10),
+                                Text(
+                                  "Create Category",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
+                      );
+                    }
 
-            final category = sampleCategories[index];
-            final tasksForCategory = widget.tasks
-                .where((task) => task.category == category.title)
-                .toList();
-            final totalTasks = tasksForCategory.length;
-            final completedTasks = tasksForCategory
-                .where((task) => task.done)
-                .length;
+                    final category = categories[index];
 
-            return CategoryCard(
-              category: category,
-              totalTasks: totalTasks,
-              completedTasks: completedTasks,
-              onTap: () => widget.onCategoryTap(category.title),
-              onLongPress: () => _confirmDelete(context, category.title),
+                    final categoryTasks = calendarBox.values
+                        .where((task) => task.category == category.title)
+                        .toList();
+
+                    final totalTasks = categoryTasks.length;
+                    final completedTasks = categoryTasks
+                        .where((task) => task.done)
+                        .length;
+
+                    return CategoryCard(
+                      category: category,
+                      totalTasks: totalTasks,
+                      completedTasks: completedTasks,
+                      onTap: () {
+                        Provider.of<SelectedCategoryProvider>(
+                          context,
+                          listen: false,
+                        ).setCategory(category.title);
+
+                        widget.onCategoryTap(category.title);
+                      },
+                      onLongPress: () =>
+                          _confirmDelete(context, category.title),
+                    );
+                  },
+                );
+              },
             );
           },
         ),
@@ -141,8 +195,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           );
 
           if (newTask != null && newTask is Calendar) {
-            widget.onTaskAdded(newTask);
-
+            // Task is already saved to Hive in AddTaskScreen
             showDialog(
               context: context,
               barrierDismissible: false,

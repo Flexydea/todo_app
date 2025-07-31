@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_app/models/calendar_model.dart';
+import 'package:todo_app/providers/selected_category_provider.dart';
 import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 import 'category_screen.dart';
 import 'calendar_screen.dart';
@@ -18,53 +21,57 @@ class HomeTabsScreen extends StatefulWidget {
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
   String? _selectedCategory;
+  late Box<Calendar> _calendarBox;
 
-  // ✅ Task list
-  final List<Calendar> _tasks = [
-    Calendar(
-      title: 'Meeting with team',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 10, minute: 30),
-      category: 'Work',
-    ),
-    Calendar(
-      title: 'morning prayer',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 17, minute: 0),
-      category: 'Personal',
-    ),
-    Calendar(
-      title: 'Afternoon prayer',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 17, minute: 0),
-      category: 'Shopping',
-    ),
-    Calendar(
-      title: 'Midnight prayer',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 17, minute: 0),
-      category: 'Urgent',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _calendarBox = Hive.box<Calendar>('calendarBox');
+  }
+
+  // // ✅ Task list
+  // final List<Calendar> _tasks = [
+  //   Calendar(
+  //     title: 'Meeting with team',
+  //     date: DateTime.now(),
+  //     time: TimeOfDay(hour: 10, minute: 30),
+  //     category: 'Work',
+  //   ),
+  //   Calendar(
+  //     title: 'morning prayer',
+  //     date: DateTime.now(),
+  //     time: TimeOfDay(hour: 17, minute: 0),
+  //     category: 'Personal',
+  //   ),
+  //   Calendar(
+  //     title: 'Afternoon prayer',
+  //     date: DateTime.now(),
+  //     time: TimeOfDay(hour: 17, minute: 0),
+  //     category: 'Shopping',
+  //   ),
+  //   Calendar(
+  //     title: 'Midnight prayer',
+  //     date: DateTime.now(),
+  //     time: TimeOfDay(hour: 17, minute: 0),
+  //     category: 'Urgent',
+  //   ),
+  // ];
 
   List<Widget> get _screens => [
     CategoryScreen(
-      tasks: _tasks,
       onCategoryTap: (selectedCategory) {
+        Provider.of<SelectedCategoryProvider>(
+          context,
+          listen: false,
+        ).setCategory(selectedCategory);
+
         setState(() {
-          _selectedCategory = selectedCategory;
           _currentIndex = 1;
-        });
-      },
-      onTaskAdded: (newTask) {
-        setState(() {
-          _tasks.removeWhere((t) => t.notificationId == newTask.notificationId);
-          _tasks.add(newTask);
         });
       },
     ),
     CalendarScreen(
-      tasks: _tasks,
+      tasks: _calendarBox.values.toList(),
       initialCategory: _selectedCategory,
       onClearFilter: () {
         setState(() {
@@ -72,7 +79,7 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
         });
       },
       onReminderChanged: () {
-        setState(() {}); // 🔁 Rebuild badge when reminder changes
+        setState(() {});
       },
     ),
     const ProfileScreen(),
@@ -91,13 +98,21 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: _currentIndex == 1 && _selectedCategory != null
+        leading:
+            _currentIndex == 1 &&
+                Provider.of<SelectedCategoryProvider>(
+                      context,
+                    ).selectedCategory !=
+                    null
             ? IconButton(
                 icon: Icon(Icons.arrow_back),
                 onPressed: () {
+                  Provider.of<SelectedCategoryProvider>(
+                    context,
+                    listen: false,
+                  ).clearCategory();
                   setState(() {
-                    _selectedCategory = null; // Clear the category filter
-                    _currentIndex = 0; // Switch back to Categories tab
+                    _currentIndex = 0;
                   });
                 },
               )

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app/models/calendar_model.dart';
+import 'package:todo_app/providers/selected_category_provider.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 import 'package:todo_app/services/notification_service.dart';
 import 'package:todo_app/screens/upcoming_reminders_screen.dart';
+import 'package:todo_app/widgets/task_card.dart';
 
 class CalendarScreen extends StatefulWidget {
   final List<Calendar> tasks;
@@ -34,17 +39,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   late String _filteredCategory;
 
-  late List<Calendar> _tasks;
+  late Box<Calendar> _calendarBox;
 
   @override
   void initState() {
     super.initState();
-    _tasks = widget.tasks;
-    _selectedDay = _focusedDay;
-
-    if (widget.initialCategory != null) {
-      // Optional: you can filter or highlight based on category
-    }
+    _calendarBox = Hive.box<Calendar>('calendarBox');
   }
 
   String? _selectedCategory;
@@ -86,34 +86,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       }
     });
   }
-
-  final List<Calendar> tasks = [
-    Calendar(
-      title: 'Meeting with team',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 10, minute: 30),
-      category: 'Work',
-    ),
-    Calendar(
-      title: 'morning prayer',
-      date: DateTime.now(),
-      // date: DateTime.now().add(Duration(days: 1)),
-      time: TimeOfDay(hour: 17, minute: 0),
-      category: 'Personal',
-    ),
-    Calendar(
-      title: 'Afternoon prayer',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 17, minute: 0),
-      category: 'Shopping',
-    ),
-    Calendar(
-      title: 'Midnight prayer',
-      date: DateTime.now(),
-      time: TimeOfDay(hour: 17, minute: 0),
-      category: 'Urgent',
-    ),
-  ];
 
   final Map<String, IconData> _categoryIcons = {
     'Work': Icons.work,
@@ -281,22 +253,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tasksForSelectedDate = _tasks
-        .where((task) {
-          final isSameDate =
-              task.date.year == _selectedDate.year &&
-              task.date.month == _selectedDate.month &&
-              task.date.day == _selectedDate.day;
-
-          final matchesCategory =
-              widget.initialCategory == null ||
-              task.category == widget.initialCategory;
-
-          return isSameDate && matchesCategory;
-        })
-        .toList()
-        .reversed
-        .toList();
+    final selectedCategory = Provider.of<SelectedCategoryProvider>(
+      context,
+    ).selectedCategory;
 
     return Column(
       children: [
@@ -317,293 +276,48 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ),
         const SizedBox(height: 16),
+
         Expanded(
-          child: tasksForSelectedDate.isEmpty
-              ? Center(
+          child: ValueListenableBuilder<Box<Calendar>>(
+            valueListenable: _calendarBox.listenable(),
+            builder: (context, box, _) {
+              final tasksForDate = box.keys
+                  .where((key) {
+                    final task = box.get(key)!;
+
+                    final matchesDate =
+                        task.date.year == _selectedDate.year &&
+                        task.date.month == _selectedDate.month &&
+                        task.date.day == _selectedDate.day;
+
+                    final matchesCategory =
+                        selectedCategory == null ||
+                        task.category.trim().toLowerCase() ==
+                            selectedCategory.trim().toLowerCase();
+
+                    return matchesDate && matchesCategory;
+                  })
+                  .map((key) => MapEntry(key, box.get(key)!))
+                  .toList();
+
+              if (tasksForDate.isEmpty) {
+                return const Center(
                   child: Text(
                     'No tasks today',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: tasksForSelectedDate.length,
-                  itemBuilder: (context, index) {
-                    final task = tasksForSelectedDate[index];
-                    return Dismissible(
-                      key: Key('${task.title}-${task.date.toIso8601String()}'),
-                      direction: DismissDirection.horizontal,
-                      background: Container(
-                        color: Colors.green,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.only(left: 20),
-                        child: const Icon(Icons.check, color: Colors.white),
-                      ),
-                      secondaryBackground: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      confirmDismiss: (direction) async {
-                        final actualIndex = _tasks.indexOf(
-                          task,
-                        ); // Get real index
+                );
+              }
 
-                        if (direction == DismissDirection.endToStart) {
-                          final deletedTask =
-                              task; // Save the task before deletion
-
-                          _showDeleteAnimation(context);
-                          await Future.delayed(
-                            const Duration(milliseconds: 600),
-                          );
-
-                          setState(() {
-                            _tasks.removeAt(actualIndex);
-
-                            // Cancel the system notification
-                            NotificationService.cancelNotification(
-                              task.notificationId,
-                            );
-
-                            // // Remove it from upcoming reminders list
-                            NotificationService.scheduledReminders.removeWhere(
-                              (reminder) =>
-                                  reminder['id'] == task.notificationId,
-                            );
-                            // Trigger parent to update badge
-                            if (widget.onReminderChanged != null) {
-                              widget.onReminderChanged!();
-                            }
-                          });
-                          // Show SnackBar with Undo
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.black87,
-                              elevation: 6,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 20,
-                              ),
-                              content: const Row(
-                                children: [
-                                  Icon(Icons.info_outline, color: Colors.white),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Task deleted',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              duration: const Duration(seconds: 4),
-                              action: SnackBarAction(
-                                label: 'UNDO',
-                                textColor: Colors.green,
-                                onPressed: () {
-                                  setState(() {
-                                    _tasks.insert(actualIndex, deletedTask);
-                                  });
-                                },
-                              ),
-                            ),
-                          );
-
-                          return true;
-                        } else if (direction == DismissDirection.startToEnd) {
-                          setState(() {
-                            _tasks[actualIndex] = Calendar(
-                              title: task.title,
-                              date: task.date,
-                              time: task.time,
-                              done: !task.done,
-                              category: task.category,
-                            );
-                          });
-                          return false;
-                        }
-                        return false;
-                      },
-
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        elevation: 2,
-                        child: ListTile(
-                          leading: Icon(
-                            _categoryIcons[task.category] ?? Icons.label,
-                            color: _getCategoryColor(task.category),
-                          ),
-                          title: Text(
-                            task.title,
-                            style: TextStyle(
-                              decoration: task.done
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
-                          ),
-                          subtitle: Text('${task.time.format(context)}'),
-                          onTap: () async {
-                            final updatedTask = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EditCalendarTaskScreen(
-                                  task: task,
-                                  onSave: (updatedTask) {
-                                    final actualIndex = _tasks.indexOf(
-                                      task,
-                                    ); // ✅ Get real index
-                                    if (actualIndex != -1) {
-                                      setState(() {
-                                        _tasks[actualIndex] = updatedTask;
-                                      });
-
-                                      // ✅ Refresh badge if needed
-                                      if (widget.onReminderChanged != null) {
-                                        widget.onReminderChanged!();
-                                      }
-                                    }
-                                  },
-                                ),
-                              ),
-                            );
-
-                            if (updatedTask != null) {
-                              final actualIndex = _tasks.indexOf(
-                                task,
-                              ); // ✅ Again double-check
-                              if (actualIndex != -1) {
-                                setState(() {
-                                  _tasks[actualIndex] = updatedTask;
-                                });
-
-                                // ✅ Also trigger badge refresh here
-                                if (widget.onReminderChanged != null) {
-                                  widget.onReminderChanged!();
-                                }
-                              }
-                            }
-                          },
-                          trailing: IconButton(
-                            icon: Icon(Icons.notifications),
-                            onPressed: () async {
-                              final pickedTime = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-
-                              if (pickedTime != null) {
-                                final now = DateTime.now();
-
-                                final scheduledDateTime = DateTime(
-                                  task.date.year,
-                                  task.date.month,
-                                  task.date.day,
-                                  pickedTime.hour,
-                                  pickedTime.minute,
-                                );
-
-                                // Prevent past scheduling
-                                if (scheduledDateTime.isBefore(now)) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                        'Please pick a future time.',
-                                      ),
-                                      backgroundColor: Colors.redAccent,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  return;
-                                }
-                                final notificationId = DateTime.now()
-                                    .millisecondsSinceEpoch
-                                    .remainder(100000);
-
-                                await NotificationService.scheduleNotification(
-                                  id: notificationId,
-                                  title: 'Task Reminder',
-                                  body: task.title,
-                                  scheduledTime: scheduledDateTime,
-                                  category: task.category,
-                                );
-
-                                // Update your task with notificationId
-                                final updatedTask = task.copyWith(
-                                  reminderTime: pickedTime,
-                                  notificationId: notificationId,
-                                );
-
-                                setState(() {
-                                  final index = _tasks.indexOf(task);
-                                  if (index != -1) {
-                                    _tasks[index] = updatedTask;
-
-                                    // Also update the original task list to avoid stale data
-                                    final widgetIndex = widget.tasks.indexOf(
-                                      task,
-                                    );
-                                    if (widgetIndex != -1) {
-                                      widget.tasks[widgetIndex] = updatedTask;
-                                    }
-                                  }
-
-                                  // ✅ Notify parent if needed (for upcoming reminders screen or badge refresh)
-                                  if (widget.onReminderChanged != null) {
-                                    widget.onReminderChanged!();
-                                  }
-                                });
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    behavior: SnackBarBehavior.floating,
-                                    backgroundColor: Colors.black87,
-                                    elevation: 6,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 20,
-                                    ),
-                                    content: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.notifications_active,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            'Reminder set for ${pickedTime.format(context)}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              return ListView.builder(
+                itemCount: tasksForDate.length,
+                itemBuilder: (_, index) {
+                  final entry = tasksForDate[index];
+                  return TaskCard(task: entry.value, hiveKey: entry.key);
+                },
+              );
+            },
+          ),
         ),
       ],
     );

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:todo_app/models/category_model.dart';
 
 class CategoryCard extends StatelessWidget {
-  final CategoryModel category;
+  final Category category;
   final int totalTasks;
   final int completedTasks;
   final VoidCallback onTap;
