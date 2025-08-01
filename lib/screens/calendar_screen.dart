@@ -11,20 +11,14 @@ import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 import 'package:todo_app/services/notification_service.dart';
 import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 import 'package:todo_app/widgets/task_card.dart';
+import 'package:table_calendar/table_calendar.dart'; // isSameDay lives here
 
 class CalendarScreen extends StatefulWidget {
-  // final List<Calendar> tasks;
-  // final String? initialCategory;
   final VoidCallback? onClearFilter;
   final VoidCallback? onReminderChanged;
 
-  const CalendarScreen({
-    Key? key,
-    // required this.tasks,
-    // this.initialCategory,
-    this.onClearFilter,
-    this.onReminderChanged,
-  }) : super(key: key);
+  const CalendarScreen({Key? key, this.onClearFilter, this.onReminderChanged})
+    : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -32,22 +26,15 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   bool isMonthly = true;
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
   DateTime _selectedDate = DateTime.now();
-  DateTime selectedDate = DateTime.now();
-
-  late String _filteredCategory;
-
   late Box<Calendar> _calendarBox;
 
   @override
   void initState() {
     super.initState();
     _calendarBox = Hive.box<Calendar>('calendarBox');
+    _selectedDate = DateTime.now(); // ✅ Ensure it's always initialized
   }
-
-  String? _selectedCategory;
 
   void _showDeleteAnimation(BuildContext context) {
     showDialog(
@@ -87,13 +74,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
-  final Map<String, IconData> _categoryIcons = {
-    'Work': Icons.work,
-    'Personal': Icons.person,
-    'Shopping': Icons.shopping_cart,
-    'Urgent': Icons.warning,
-  };
-
   Widget _buildToggleTabs() {
     return Container(
       height: 40,
@@ -106,11 +86,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  isMonthly = false;
-                });
-              },
+              onTap: () => setState(() => isMonthly = false),
               child: Container(
                 color: !isMonthly ? Colors.green : Colors.transparent,
                 alignment: Alignment.center,
@@ -124,14 +100,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
           ),
-
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  isMonthly = true;
-                });
-              },
+              onTap: () => setState(() => isMonthly = true),
               child: Container(
                 color: isMonthly ? Colors.green : Colors.transparent,
                 alignment: Alignment.center,
@@ -156,9 +127,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       firstDay: DateTime.utc(2020, 1, 1),
       lastDay: DateTime.utc(2030, 12, 31),
       selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
-      onDaySelected: (selectedDay, _) {
-        setState(() => _selectedDate = selectedDay);
-      },
+      onDaySelected: (selectedDay, _) =>
+          setState(() => _selectedDate = selectedDay),
       calendarStyle: CalendarStyle(
         todayDecoration: const BoxDecoration(
           color: Colors.green,
@@ -170,8 +140,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         outsideTextStyle: TextStyle(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors
-                    .white54 // Light grey in dark mode
+              ? Colors.white54
               : Colors.grey[500],
         ),
         defaultTextStyle: TextStyle(
@@ -204,18 +173,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
               _selectedDate.day == date.day;
 
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedDate = date;
-              });
-            },
+            onTap: () => setState(() => _selectedDate = date),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.green : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Color.fromARGB(255, 0, 0, 0)),
+                border: Border.all(color: Colors.black),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -262,10 +227,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       children: [
         _buildToggleTabs(),
         isMonthly ? _buildMonthlyCalendar() : _buildDailyPicker(),
-
         const Divider(thickness: 4),
         const SizedBox(height: 12),
-
         Align(
           alignment: Alignment.center,
           child: Text(
@@ -277,23 +240,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ),
         const SizedBox(height: 16),
-
         Expanded(
-          child: Consumer<SelectedCategoryProvider>(
-            builder: (context, provider, _) {
-              final selectedCategory = provider.selectedCategory;
+          child: ValueListenableBuilder<Box<Calendar>>(
+            valueListenable: _calendarBox.listenable(),
+            builder: (context, box, _) {
+              final today = DateTime.now();
+              _selectedDate = _selectedDate ?? today;
 
-              return ValueListenableBuilder<Box<Calendar>>(
-                valueListenable: _calendarBox.listenable(),
-                builder: (context, box, _) {
-                  final tasksForDate = box.keys
+              final tasksForDate =
+                  box.keys
                       .where((key) {
-                        final task = box.get(key)!;
+                        final task = box.get(key);
+                        if (task == null) return false;
 
-                        final matchesDate =
-                            task.date.year == _selectedDate.year &&
-                            task.date.month == _selectedDate.month &&
-                            task.date.day == _selectedDate.day;
+                        final matchesDate = isSameDay(task.date, _selectedDate);
 
                         final matchesCategory =
                             selectedCategory == null ||
@@ -303,24 +263,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         return matchesDate && matchesCategory;
                       })
                       .map((key) => MapEntry(key, box.get(key)!))
-                      .toList();
+                      .toList()
+                    ..sort(
+                      (a, b) => a.value.time.compareTo(b.value.time),
+                    ); // 🔁 Sort by time
 
-                  if (tasksForDate.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No tasks today',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    );
-                  }
+              if (tasksForDate.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No tasks today',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                );
+              }
 
-                  return ListView.builder(
-                    itemCount: tasksForDate.length,
-                    itemBuilder: (_, index) {
-                      final entry = tasksForDate[index];
-                      return TaskCard(task: entry.value, hiveKey: entry.key);
-                    },
-                  );
+              return ListView.builder(
+                itemCount: tasksForDate.length,
+                itemBuilder: (_, index) {
+                  final entry = tasksForDate[index];
+                  return TaskCard(task: entry.value, hiveKey: entry.key);
                 },
               );
             },
@@ -328,20 +289,5 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
       ],
     );
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'work':
-        return Colors.blue;
-      case 'personal':
-        return Colors.orange;
-      case 'shopping':
-        return Colors.green;
-      case 'urgent':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
   }
 }

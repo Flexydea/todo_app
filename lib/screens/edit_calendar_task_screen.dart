@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart'; // Needed for category titles
+import 'package:todo_app/providers/reminder_count_provider.dart';
 import 'package:todo_app/services/notification_service.dart';
 
 class EditCalendarTaskScreen extends StatefulWidget {
@@ -81,6 +83,12 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
           scheduledTime: scheduledTime,
           category: updatedTask.category,
         );
+
+        // Update the reminder badge count
+        Provider.of<ReminderCountProvider>(
+          context,
+          listen: false,
+        ).updateReminderCount();
       }
     } catch (e) {
       debugPrint("Notification error: $e");

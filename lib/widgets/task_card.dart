@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart';
+import 'package:todo_app/providers/reminder_count_provider.dart';
 import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 import 'package:todo_app/services/notification_service.dart';
 import 'package:lottie/lottie.dart';
@@ -119,6 +121,46 @@ class TaskCard extends StatelessWidget {
                   EditCalendarTaskScreen(task: task, hiveKey: hiveKey),
             ),
           );
+        },
+        onLongPress: () async {
+          final pickedTime = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.now(),
+          );
+
+          if (pickedTime != null) {
+            final updatedTask = task.copyWith(reminderTime: pickedTime);
+
+            final calendarBox = Hive.box<Calendar>('calendarBox');
+            await calendarBox.put(hiveKey, updatedTask);
+
+            final now = DateTime.now();
+            final scheduledDateTime = DateTime(
+              updatedTask.date.year,
+              updatedTask.date.month,
+              updatedTask.date.day,
+              pickedTime.hour,
+              pickedTime.minute,
+            );
+
+            await NotificationService.scheduleNotification(
+              id: updatedTask.notificationId,
+              title: updatedTask.title,
+              body: 'Reminder for ${updatedTask.title}',
+              scheduledTime: scheduledDateTime,
+              category: updatedTask.category,
+            );
+
+            //  Immediately update the red badge count
+            Provider.of<ReminderCountProvider>(
+              context,
+              listen: false,
+            ).updateReminderCount();
+            // Optional: show a quick confirmation
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text("Reminder set")));
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Card(

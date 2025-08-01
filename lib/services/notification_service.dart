@@ -1,44 +1,40 @@
-// lib/services/notification_service.dart
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzData;
+import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/main.dart';
+import 'package:todo_app/providers/reminder_count_provider.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  static final List<Map<String, dynamic>> _scheduledReminders = [];
-
-  static List<Map<String, dynamic>> get scheduledReminders =>
-      _scheduledReminders;
+  static List<Map<String, dynamic>> get scheduledReminders => Hive.box(
+    'remindersBox',
+  ).values.cast<Map>().toList().cast<Map<String, dynamic>>();
 
   static Future<void> init() async {
     tzData.initializeTimeZones();
-    // iOS Settings
-    const DarwinInitializationSettings iosSettings =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
 
-    // Android Settings
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
 
-    // Combine both into InitializationSettings
-    const InitializationSettings initSettings = InitializationSettings(
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
+
+    const settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
-    // Initialize timezones
-    tzData.initializeTimeZones();
+    await _notificationsPlugin.initialize(settings);
 
-    // Initialize the plugin
-    await _notificationsPlugin.initialize(initSettings);
-
-    // Optional: explicitly request permissions for iOS
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
@@ -53,45 +49,70 @@ class NotificationService {
     required DateTime scheduledTime,
     required String category,
   }) async {
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledTime, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'todo_reminders',
-          'Task Reminders',
-          channelDescription: 'Task Reminder Notifications',
-          importance: Importance.high,
-          priority: Priority.high,
+    if (scheduledTime.isAfter(DateTime.now())) {
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'todo_reminders',
+            'Task Reminders',
+            channelDescription: 'Task Reminder Notifications',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
 
-    // Prevent duplicates
-    _scheduledReminders.removeWhere((r) => r['id'] == id);
+      final box = Hive.box('remindersBox');
+      await box.put(id, {
+        'id': id,
+        'body': body,
+        'time': scheduledTime,
+        'category': category,
+      });
 
-    _scheduledReminders.add({
-      'id': id,
-      'body': body,
-      'time': scheduledTime,
-      'category': category,
-    });
-    print("Reminder added: $_scheduledReminders");
+      _updateGlobalReminderCount();
+
+      debugPrint("✅ Reminder scheduled and saved in Hive (id: $id)");
+    } else {
+      debugPrint("❌ Skipping reminder: $scheduledTime is in the past.");
+    }
   }
 
   static Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
-    _scheduledReminders.removeWhere((r) => r['id'] == id);
+    final box = Hive.box('remindersBox');
+    await box.delete(id);
+
+    _updateGlobalReminderCount();
+
+    debugPrint("🚫 Reminder cancelled and removed from Hive (id: $id)");
   }
 
   static Future<void> cancelAll() async {
     await _notificationsPlugin.cancelAll();
-    _scheduledReminders.clear();
+    await Hive.box('remindersBox').clear();
+
+    _updateGlobalReminderCount();
+
+    debugPrint("🚫 All reminders cancelled and cleared from Hive");
+  }
+
+  static void _updateGlobalReminderCount() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      Provider.of<ReminderCountProvider>(
+        context,
+        listen: false,
+      ).updateReminderCount();
+    }
   }
 }

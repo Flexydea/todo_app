@@ -9,6 +9,7 @@ import 'calendar_screen.dart';
 import 'profile_screen.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:todo_app/services/notification_service.dart';
+import 'package:todo_app/providers/reminder_count_provider.dart';
 
 class HomeTabsScreen extends StatefulWidget {
   const HomeTabsScreen({Key? key}) : super(key: key);
@@ -49,29 +50,38 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: badges.Badge(
-              position: badges.BadgePosition.topEnd(top: 0, end: 3),
-              showBadge: NotificationService.scheduledReminders.isNotEmpty,
-              badgeContent: Text(
-                NotificationService.scheduledReminders.length.toString(),
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-              ),
-              badgeStyle: const badges.BadgeStyle(
-                badgeColor: Colors.red,
-                padding: EdgeInsets.all(6),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => UpcomingRemindersScreen(),
-                    ),
-                  );
-                  setState(() {}); // Refresh badge when returning
-                },
-              ),
+            child: Consumer<ReminderCountProvider>(
+              builder: (context, reminderProvider, _) {
+                return badges.Badge(
+                  position: badges.BadgePosition.topEnd(top: 0, end: 3),
+                  showBadge: reminderProvider.count > 0,
+                  badgeContent: Text(
+                    reminderProvider.count.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                  badgeStyle: const badges.BadgeStyle(
+                    badgeColor: Colors.red,
+                    padding: EdgeInsets.all(6),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UpcomingRemindersScreen(),
+                        ),
+                      );
+
+                      // 🔁 Refresh on return
+                      Provider.of<ReminderCountProvider>(
+                        context,
+                        listen: false,
+                      ).updateReminderCount();
+                    },
+                  ),
+                );
+              },
             ),
           ),
         ],

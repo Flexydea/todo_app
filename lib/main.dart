@@ -1,58 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart';
+import 'package:todo_app/providers/reminder_count_provider.dart';
 import 'package:todo_app/providers/selected_category_provider.dart';
 import 'package:todo_app/theme/theme_notifier.dart';
 import 'package:todo_app/screens/home_tabs_screen.dart';
 import 'adapters/color_adapter.dart';
 import 'adapters/icon_data_adapter.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context);
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
-        cardColor: Colors.white,
-        textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.black)),
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        cardColor: Colors.grey[900],
-        textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.white)),
-      ),
-      home: const HomeTabsScreen(),
-    );
-  }
-}
-
-void fixNotificationIds() {
-  final calendarBox = Hive.box<Calendar>('calendarBox');
-  for (var key in calendarBox.keys) {
-    final task = calendarBox.get(key);
-    if (task != null && task.notificationId > 2147483647) {
-      final updated = task.copyWith(
-        notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
-          1000000,
-        ),
-      );
-      calendarBox.put(key, updated);
-    }
-  }
-}
+// ✅ Make navigatorKey global so it can be used inside services
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+
   await Hive.initFlutter();
 
   // TEMP: Wipe incompatible calendarBox
@@ -65,6 +31,7 @@ void main() async {
 
   await Hive.openBox<Category>('categoryBox');
   await Hive.openBox<Calendar>('calendarBox');
+  await Hive.openBox('remindersBox');
 
   fixNotificationIds();
 
@@ -87,8 +54,53 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
         ChangeNotifierProvider(create: (_) => SelectedCategoryProvider()),
+        ChangeNotifierProvider(
+          create: (_) => ReminderCountProvider()..updateReminderCount(),
+        ),
       ],
       child: const MyApp(),
     ),
   );
+}
+
+void fixNotificationIds() {
+  final calendarBox = Hive.box<Calendar>('calendarBox');
+  for (var key in calendarBox.keys) {
+    final task = calendarBox.get(key);
+    if (task != null && task.notificationId > 2147483647) {
+      final updated = task.copyWith(
+        notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
+          1000000,
+        ),
+      );
+      calendarBox.put(key, updated);
+    }
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+    return MaterialApp(
+      navigatorKey: navigatorKey, // ✅ Global context access
+      debugShowCheckedModeBanner: false,
+      themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        cardColor: Colors.white,
+        textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.black)),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
+        cardColor: Colors.grey[900],
+        textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.white)),
+      ),
+      home: const HomeTabsScreen(),
+    );
+  }
 }
