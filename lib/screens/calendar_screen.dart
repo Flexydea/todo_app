@@ -13,15 +13,15 @@ import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 import 'package:todo_app/widgets/task_card.dart';
 
 class CalendarScreen extends StatefulWidget {
-  final List<Calendar> tasks;
-  final String? initialCategory;
+  // final List<Calendar> tasks;
+  // final String? initialCategory;
   final VoidCallback? onClearFilter;
   final VoidCallback? onReminderChanged;
 
   const CalendarScreen({
     Key? key,
-    required this.tasks,
-    this.initialCategory,
+    // required this.tasks,
+    // this.initialCategory,
     this.onClearFilter,
     this.onReminderChanged,
   }) : super(key: key);
@@ -108,26 +108,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  isMonthly = true;
-                });
-              },
-              child: Container(
-                color: isMonthly ? Colors.green : Colors.transparent,
-                alignment: Alignment.center,
-                child: Text(
-                  'MONTHLY',
-                  style: TextStyle(
-                    color: isMonthly ? Colors.white : Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
                   isMonthly = false;
                 });
               },
@@ -138,6 +118,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   'DAILY',
                   style: TextStyle(
                     color: !isMonthly ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  isMonthly = true;
+                });
+              },
+              child: Container(
+                color: isMonthly ? Colors.green : Colors.transparent,
+                alignment: Alignment.center,
+                child: Text(
+                  'MONTHLY',
+                  style: TextStyle(
+                    color: isMonthly ? Colors.white : Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -278,42 +279,48 @@ class _CalendarScreenState extends State<CalendarScreen> {
         const SizedBox(height: 16),
 
         Expanded(
-          child: ValueListenableBuilder<Box<Calendar>>(
-            valueListenable: _calendarBox.listenable(),
-            builder: (context, box, _) {
-              final tasksForDate = box.keys
-                  .where((key) {
-                    final task = box.get(key)!;
+          child: Consumer<SelectedCategoryProvider>(
+            builder: (context, provider, _) {
+              final selectedCategory = provider.selectedCategory;
 
-                    final matchesDate =
-                        task.date.year == _selectedDate.year &&
-                        task.date.month == _selectedDate.month &&
-                        task.date.day == _selectedDate.day;
+              return ValueListenableBuilder<Box<Calendar>>(
+                valueListenable: _calendarBox.listenable(),
+                builder: (context, box, _) {
+                  final tasksForDate = box.keys
+                      .where((key) {
+                        final task = box.get(key)!;
 
-                    final matchesCategory =
-                        selectedCategory == null ||
-                        task.category.trim().toLowerCase() ==
-                            selectedCategory.trim().toLowerCase();
+                        final matchesDate =
+                            task.date.year == _selectedDate.year &&
+                            task.date.month == _selectedDate.month &&
+                            task.date.day == _selectedDate.day;
 
-                    return matchesDate && matchesCategory;
-                  })
-                  .map((key) => MapEntry(key, box.get(key)!))
-                  .toList();
+                        final matchesCategory =
+                            selectedCategory == null ||
+                            task.category.trim().toLowerCase() ==
+                                selectedCategory.trim().toLowerCase();
 
-              if (tasksForDate.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No tasks today',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                );
-              }
+                        return matchesDate && matchesCategory;
+                      })
+                      .map((key) => MapEntry(key, box.get(key)!))
+                      .toList();
 
-              return ListView.builder(
-                itemCount: tasksForDate.length,
-                itemBuilder: (_, index) {
-                  final entry = tasksForDate[index];
-                  return TaskCard(task: entry.value, hiveKey: entry.key);
+                  if (tasksForDate.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No tasks today',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: tasksForDate.length,
+                    itemBuilder: (_, index) {
+                      final entry = tasksForDate[index];
+                      return TaskCard(task: entry.value, hiveKey: entry.key);
+                    },
+                  );
                 },
               );
             },

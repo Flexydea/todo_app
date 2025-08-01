@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:todo_app/models/calendar_model.dart';
+import 'package:todo_app/models/category_model.dart'; // Needed for category titles
 import 'package:todo_app/services/notification_service.dart';
 
 class EditCalendarTaskScreen extends StatefulWidget {
   final Calendar task;
-  final void Function(Calendar updatedTask) onSave;
+  final dynamic hiveKey;
 
   const EditCalendarTaskScreen({
     required this.task,
-    required this.onSave,
+    required this.hiveKey,
     Key? key,
   }) : super(key: key);
 
@@ -21,7 +23,7 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
   late TimeOfDay _selectedTime;
   late String _selectedCategory;
 
-  final List<String> _categories = ['Work', 'Personal', 'Shopping', 'Urgent'];
+  late List<String> _categories;
 
   @override
   void initState() {
@@ -29,44 +31,67 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
     _titleController = TextEditingController(text: widget.task.title);
     _selectedTime = widget.task.parsedTime;
     _selectedCategory = widget.task.category;
+
+    final categoryBox = Hive.box<Category>('categoryBox');
+
+    // ✅ Get all category titles from Hive
+    final savedTitles = categoryBox.values.map((cat) => cat.title).toSet();
+
+    // ✅ Ensure current category is also included (for safety)
+    savedTitles.add(_selectedCategory);
+
+    _categories = savedTitles.toList();
   }
 
-  void _saveChanges() async {
-    final updatedTask = Calendar(
-      title: _titleController.text,
-      date: widget.task.date,
+  Future<void> _saveChanges() async {
+    final updatedTask = widget.task.copyWith(
+      title: _titleController.text.trim(),
       time: _selectedTime,
       category: _selectedCategory,
-      done: widget.task.done,
-      notificationId: widget.task.notificationId, // make sure this is passed
     );
 
-    // Cancel existing reminder
-    await NotificationService.cancelNotification(widget.task.notificationId);
+    final calendarBox = Hive.box<Calendar>('calendarBox');
+    await calendarBox.put(widget.hiveKey, updatedTask);
 
-    // Schedule new one
-    await NotificationService.scheduleNotification(
-      id: updatedTask.notificationId,
-      title: updatedTask.title,
-      body: 'Reminder for ${updatedTask.title}',
-      scheduledTime: DateTime(
-        updatedTask.date.year,
-        updatedTask.date.month,
-        updatedTask.date.day,
-        updatedTask.parsedTime.hour,
-        updatedTask.parsedTime.minute,
-      ),
-      category: updatedTask.category,
-    );
+    try {
+      // Cancel old notification if it exists
+      if (updatedTask.notificationId != null &&
+          updatedTask.notificationId <= 2147483647) {
+        await NotificationService.cancelNotification(
+          updatedTask.notificationId,
+        );
+      }
 
-    widget.onSave(updatedTask);
-    Navigator.pop(context);
+      // Reschedule notification if reminder exists
+      if (updatedTask.parsedReminderTime != null &&
+          updatedTask.notificationId <= 2147483647) {
+        final reminder = updatedTask.parsedReminderTime!;
+        final scheduledTime = DateTime(
+          updatedTask.date.year,
+          updatedTask.date.month,
+          updatedTask.date.day,
+          reminder.hour,
+          reminder.minute,
+        );
+
+        await NotificationService.scheduleNotification(
+          id: updatedTask.notificationId,
+          title: updatedTask.title,
+          body: 'Reminder for ${updatedTask.title}',
+          scheduledTime: scheduledTime,
+          category: updatedTask.category,
+        );
+      }
+    } catch (e) {
+      debugPrint("Notification error: $e");
+    }
+
+    if (mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -74,25 +99,20 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
         title: const Text('Edit Task'),
         backgroundColor: Colors.green,
         elevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
               controller: _titleController,
-              style: theme.textTheme.bodyLarge,
               decoration: InputDecoration(
                 labelText: "Task Title",
-                labelStyle: theme.textTheme.labelLarge,
                 border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: theme.cardColor,
               ),
+              style: theme.textTheme.bodyLarge,
             ),
             const SizedBox(height: 20),
             Row(
@@ -135,45 +155,39 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
-              style: theme.textTheme.bodyLarge,
-              dropdownColor: theme.cardColor,
+              items: _categories
+                  .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedCategory = value;
+                  });
+                }
+              },
               decoration: InputDecoration(
                 labelText: 'Category',
-                labelStyle: theme.textTheme.labelLarge,
                 border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: theme.cardColor,
               ),
-              items: _categories.map((category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCategory = value!;
-                });
-              },
+              style: theme.textTheme.bodyLarge,
             ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _saveChanges,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  elevation: 4,
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: _saveChanges,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
                 ),
-                child: const Text("Save Changes"),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 4,
               ),
+              child: const Text("Save Changes"),
             ),
           ],
         ),

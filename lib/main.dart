@@ -36,11 +36,28 @@ class MyApp extends StatelessWidget {
   }
 }
 
+void fixNotificationIds() {
+  final calendarBox = Hive.box<Calendar>('calendarBox');
+  for (var key in calendarBox.keys) {
+    final task = calendarBox.get(key);
+    if (task != null && task.notificationId > 2147483647) {
+      final updated = task.copyWith(
+        notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
+          1000000,
+        ),
+      );
+      calendarBox.put(key, updated);
+    }
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+
+  // TEMP: Wipe incompatible calendarBox
   await Hive.deleteBoxFromDisk('calendarBox');
-  await Hive.openBox<Calendar>('calendarBox');
+
   Hive.registerAdapter(CategoryAdapter());
   Hive.registerAdapter(CalendarAdapter());
   Hive.registerAdapter(IconDataAdapter());
@@ -48,6 +65,8 @@ void main() async {
 
   await Hive.openBox<Category>('categoryBox');
   await Hive.openBox<Calendar>('calendarBox');
+
+  fixNotificationIds();
 
   final categoryBox = Hive.box<Category>('categoryBox');
   if (categoryBox.isEmpty) {
@@ -69,7 +88,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
         ChangeNotifierProvider(create: (_) => SelectedCategoryProvider()),
       ],
-      child: const MyApp(), // ✅ this must come after class MyApp is defined
+      child: const MyApp(),
     ),
   );
 }

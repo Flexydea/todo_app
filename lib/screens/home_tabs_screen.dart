@@ -9,7 +9,6 @@ import 'calendar_screen.dart';
 import 'profile_screen.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:todo_app/services/notification_service.dart';
-import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 
 class HomeTabsScreen extends StatefulWidget {
   const HomeTabsScreen({Key? key}) : super(key: key);
@@ -20,92 +19,20 @@ class HomeTabsScreen extends StatefulWidget {
 
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
-  String? _selectedCategory;
-  late Box<Calendar> _calendarBox;
-
-  @override
-  void initState() {
-    super.initState();
-    _calendarBox = Hive.box<Calendar>('calendarBox');
-  }
-
-  // // ✅ Task list
-  // final List<Calendar> _tasks = [
-  //   Calendar(
-  //     title: 'Meeting with team',
-  //     date: DateTime.now(),
-  //     time: TimeOfDay(hour: 10, minute: 30),
-  //     category: 'Work',
-  //   ),
-  //   Calendar(
-  //     title: 'morning prayer',
-  //     date: DateTime.now(),
-  //     time: TimeOfDay(hour: 17, minute: 0),
-  //     category: 'Personal',
-  //   ),
-  //   Calendar(
-  //     title: 'Afternoon prayer',
-  //     date: DateTime.now(),
-  //     time: TimeOfDay(hour: 17, minute: 0),
-  //     category: 'Shopping',
-  //   ),
-  //   Calendar(
-  //     title: 'Midnight prayer',
-  //     date: DateTime.now(),
-  //     time: TimeOfDay(hour: 17, minute: 0),
-  //     category: 'Urgent',
-  //   ),
-  // ];
-
-  List<Widget> get _screens => [
-    CategoryScreen(
-      onCategoryTap: (selectedCategory) {
-        Provider.of<SelectedCategoryProvider>(
-          context,
-          listen: false,
-        ).setCategory(selectedCategory);
-
-        setState(() {
-          _currentIndex = 1;
-        });
-      },
-    ),
-    CalendarScreen(
-      tasks: _calendarBox.values.toList(),
-      initialCategory: _selectedCategory,
-      onClearFilter: () {
-        setState(() {
-          _selectedCategory = null;
-        });
-      },
-      onReminderChanged: () {
-        setState(() {});
-      },
-    ),
-    const ProfileScreen(),
-  ];
-
-  void _handleCategoryTap(String category) {
-    setState(() {
-      _selectedCategory = category;
-      _currentIndex = 1;
-    });
-  }
 
   final List<String> _titles = ['Categories', 'Calendar', 'Profile'];
 
   @override
   Widget build(BuildContext context) {
+    final selectedCategory = Provider.of<SelectedCategoryProvider>(
+      context,
+    ).selectedCategory;
+
     return Scaffold(
       appBar: AppBar(
-        leading:
-            _currentIndex == 1 &&
-                Provider.of<SelectedCategoryProvider>(
-                      context,
-                    ).selectedCategory !=
-                    null
+        leading: _currentIndex == 1 && selectedCategory != null
             ? IconButton(
-                icon: Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back),
                 onPressed: () {
                   Provider.of<SelectedCategoryProvider>(
                     context,
@@ -149,24 +76,21 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          if (_currentIndex == index &&
-              index == 1 &&
-              _selectedCategory != null) {
-            // Calendar tab re-tapped while filter is active
-            setState(() {
-              _selectedCategory = null; // Clear filter
-            });
-          } else {
-            setState(() {
-              _currentIndex = index;
-            });
+          if (_currentIndex == index && index == 1) {
+            Provider.of<SelectedCategoryProvider>(
+              context,
+              listen: false,
+            ).clearCategory();
           }
+          setState(() {
+            _currentIndex = index;
+          });
         },
         items: const [
           BottomNavigationBarItem(
@@ -181,5 +105,33 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildBody() {
+    if (_currentIndex == 0) {
+      return CategoryScreen(
+        onCategoryTap: (selectedCategory) {
+          Provider.of<SelectedCategoryProvider>(
+            context,
+            listen: false,
+          ).setCategory(selectedCategory);
+
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+      );
+    }
+
+    if (_currentIndex == 1) {
+      // Watch the selected category to force rebuild
+      return Consumer<SelectedCategoryProvider>(
+        builder: (context, provider, _) {
+          return CalendarScreen(); // now this rebuilds properly
+        },
+      );
+    }
+
+    return const ProfileScreen();
   }
 }

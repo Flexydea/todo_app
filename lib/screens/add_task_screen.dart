@@ -17,6 +17,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String _selectedCategory = 'Work';
   TimeOfDay _selectedTime = TimeOfDay.now();
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay? _reminderTime;
 
   late List<String> _categories;
 
@@ -67,6 +68,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         category:
             _selectedCategory, // Make sure you're assigning the selected category
         done: false, // default to not done
+        reminderTime: _reminderTime,
+        notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
+          1000000,
+        ),
       );
 
       final calendarBox = Hive.box<Calendar>('calendarBox');
