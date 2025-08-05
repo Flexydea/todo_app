@@ -11,7 +11,6 @@ import 'package:todo_app/screens/edit_calendar_task_screen.dart';
 import 'package:todo_app/services/notification_service.dart';
 import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 import 'package:todo_app/widgets/task_card.dart';
-import 'package:table_calendar/table_calendar.dart'; // isSameDay lives here
 
 class CalendarScreen extends StatefulWidget {
   final VoidCallback? onClearFilter;
@@ -24,16 +23,24 @@ class CalendarScreen extends StatefulWidget {
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends State<CalendarScreen>
+    with TickerProviderStateMixin {
   bool isMonthly = true;
   DateTime _selectedDate = DateTime.now();
   late Box<Calendar> _calendarBox;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _calendarBox = Hive.box<Calendar>('calendarBox');
-    _selectedDate = DateTime.now(); //  Ensure it's always initialized
+    _selectedDate = DateTime.now();
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    await Future.delayed(Duration(milliseconds: 100));
+    if (mounted) setState(() {});
   }
 
   void _showDeleteAnimation(BuildContext context) {
@@ -122,39 +129,46 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildMonthlyCalendar() {
-    return TableCalendar(
-      focusedDay: _selectedDate,
-      firstDay: DateTime.utc(2020, 1, 1),
-      lastDay: DateTime.utc(2030, 12, 31),
-      selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
-      onDaySelected: (selectedDay, _) =>
-          setState(() => _selectedDate = selectedDay),
-      calendarStyle: CalendarStyle(
-        todayDecoration: const BoxDecoration(
-          color: Colors.green,
-          shape: BoxShape.circle,
-        ),
-        selectedDecoration: const BoxDecoration(
-          color: Colors.green,
-          shape: BoxShape.circle,
-        ),
-        outsideTextStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white54
-              : Colors.grey[500],
-        ),
-        defaultTextStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
-        ),
-        weekendTextStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white70
-              : Colors.black87,
-        ),
-      ),
-      headerStyle: HeaderStyle(formatButtonVisible: false, titleCentered: true),
+    return ValueListenableBuilder(
+      valueListenable: _calendarBox.listenable(),
+      builder: (context, Box<Calendar> box, _) {
+        return TableCalendar(
+          focusedDay: _selectedDate,
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2030, 12, 31),
+          selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
+          onDaySelected: (selectedDay, _) {
+            setState(() {
+              _selectedDate = selectedDay;
+              isMonthly = false; // Optional: auto switch tab
+            });
+          },
+          eventLoader: (day) {
+            return box.values
+                .where((task) => isSameDay(task.date, day))
+                .toList();
+          },
+          calendarStyle: CalendarStyle(
+            todayDecoration: const BoxDecoration(
+              color: Colors.green,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: const BoxDecoration(
+              color: Colors.green,
+              shape: BoxShape.circle,
+            ),
+            markerDecoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            markersMaxCount: 1,
+          ),
+          headerStyle: const HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+          ),
+        );
+      },
     );
   }
 
@@ -263,9 +277,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       })
                       .map((key) => MapEntry(key, box.get(key)!))
                       .toList()
-                    ..sort(
-                      (a, b) => a.value.time.compareTo(b.value.time),
-                    ); // 🔁 Sort by time
+                    ..sort((a, b) => a.value.time.compareTo(b.value.time));
 
               if (tasksForDate.isEmpty) {
                 return const Center(
