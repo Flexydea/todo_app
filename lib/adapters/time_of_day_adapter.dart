@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
+// part 'time_of_day_adapter.g.dart'; // If you want to use HiveGenerator (optional)
+
 class TimeOfDayAdapter extends TypeAdapter<TimeOfDay> {
   @override
-  final int typeId = 55; // Use a unique ID
+  final int typeId = 55;
 
   @override
   TimeOfDay read(BinaryReader reader) {

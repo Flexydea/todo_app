@@ -31,15 +31,15 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
-    _selectedTime = widget.task.parsedTime;
+    _selectedTime = widget.task.reminderTime ?? widget.task.time;
     _selectedCategory = widget.task.category;
 
     final categoryBox = Hive.box<Category>('categoryBox');
 
-    // ✅ Get all category titles from Hive
+    // Get all category titles from Hive
     final savedTitles = categoryBox.values.map((cat) => cat.title).toSet();
 
-    // ✅ Ensure current category is also included (for safety)
+    // Ensure current category is also included (for safety)
     savedTitles.add(_selectedCategory);
 
     _categories = savedTitles.toList();
@@ -58,15 +58,17 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
     try {
       // Cancel old notification if it exists
       if (updatedTask.notificationId != null &&
-          updatedTask.notificationId <= 2147483647) {
-        await NotificationService.cancelNotification(
-          updatedTask.notificationId,
-        );
+          updatedTask.notificationId! <= 2147483647) {
+        if (updatedTask.notificationId != null) {
+          await NotificationService.cancelNotification(
+            updatedTask.notificationId!,
+          );
+        }
       }
 
       // Reschedule notification if reminder exists
       if (updatedTask.parsedReminderTime != null &&
-          updatedTask.notificationId <= 2147483647) {
+          updatedTask.notificationId! <= 2147483647) {
         final reminder = updatedTask.parsedReminderTime!;
         final scheduledTime = DateTime(
           updatedTask.date.year,
@@ -76,19 +78,45 @@ class _EditCalendarTaskScreenState extends State<EditCalendarTaskScreen> {
           reminder.minute,
         );
 
-        await NotificationService.scheduleNotification(
-          id: updatedTask.notificationId,
+        final success = await NotificationService.scheduleNotification(
+          id:
+              updatedTask.notificationId ??
+              DateTime.now().millisecondsSinceEpoch.remainder(1000000),
           title: updatedTask.title,
           body: 'Reminder for ${updatedTask.title}',
           scheduledTime: scheduledTime,
           category: updatedTask.category,
         );
 
-        // Update the reminder badge count
-        Provider.of<ReminderCountProvider>(
-          context,
-          listen: false,
-        ).updateReminderCount();
+        if (!success) {
+          await calendarBox.put(widget.hiveKey, widget.task); // rollback
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Cannot schedule reminder in the past: ${scheduledTime.toLocal()}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(' Reminder set'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Update badge count
+        if (mounted) {
+          Provider.of<ReminderCountProvider>(
+            context,
+            listen: false,
+          ).updateReminderCount();
+        }
       }
     } catch (e) {
       debugPrint("Notification error: $e");

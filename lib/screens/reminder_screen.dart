@@ -30,7 +30,11 @@ class _ReminderScreenState extends State<ReminderScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
               title: Text(task.title),
-              subtitle: Text(task.parsedTime.format(context)),
+              subtitle: Text(
+                task.reminderTime != null
+                    ? task.reminderTime!.format(context)
+                    : 'No reminder set',
+              ),
               trailing: IconButton(
                 icon: const Icon(Icons.notifications_active),
                 onPressed: () async {

@@ -33,7 +33,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     _calendarBox = Hive.box<Calendar>('calendarBox');
-    _selectedDate = DateTime.now(); // ✅ Ensure it's always initialized
+    _selectedDate = DateTime.now(); //  Ensure it's always initialized
   }
 
   void _showDeleteAnimation(BuildContext context) {
@@ -244,8 +244,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: ValueListenableBuilder<Box<Calendar>>(
             valueListenable: _calendarBox.listenable(),
             builder: (context, box, _) {
-              final today = DateTime.now();
-              _selectedDate = _selectedDate ?? today;
+              final selectedDate = _selectedDate;
 
               final tasksForDate =
                   box.keys
@@ -253,7 +252,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         final task = box.get(key);
                         if (task == null) return false;
 
-                        final matchesDate = isSameDay(task.date, _selectedDate);
+                        final matchesDate = isSameDay(task.date, selectedDate);
 
                         final matchesCategory =
                             selectedCategory == null ||

@@ -11,8 +11,9 @@ import 'adapters/color_adapter.dart';
 import 'adapters/icon_data_adapter.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'adapters/time_of_day_adapter.dart';
 
-// ✅ Make navigatorKey global so it can be used inside services
+// Make navigatorKey global so it can be used inside services
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -21,13 +22,15 @@ void main() async {
 
   await Hive.initFlutter();
 
-  // TEMP: Wipe incompatible calendarBox
-  await Hive.deleteBoxFromDisk('calendarBox');
-
+  // Register all adapters before opening boxes
   Hive.registerAdapter(CategoryAdapter());
   Hive.registerAdapter(CalendarAdapter());
   Hive.registerAdapter(IconDataAdapter());
   Hive.registerAdapter(ColorAdapter());
+  Hive.registerAdapter(TimeOfDayAdapter());
+
+  // Remove corrupted box if needed (you already have this)
+  // await Hive.deleteBoxFromDisk('calendarBox');
 
   await Hive.openBox<Category>('categoryBox');
   await Hive.openBox<Calendar>('calendarBox');
@@ -67,7 +70,7 @@ void fixNotificationIds() {
   final calendarBox = Hive.box<Calendar>('calendarBox');
   for (var key in calendarBox.keys) {
     final task = calendarBox.get(key);
-    if (task != null && task.notificationId > 2147483647) {
+    if (task != null && task.notificationId! > 2147483647) {
       final updated = task.copyWith(
         notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
           1000000,

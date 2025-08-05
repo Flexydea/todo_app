@@ -14,7 +14,7 @@ class TaskCard extends StatelessWidget {
 
   const TaskCard({super.key, required this.task, required this.hiveKey});
 
-  void _showDeleteDialog(BuildContext context, dynamic hiveKey) {
+  void _showDeleteDialog(BuildContext context, dynamic hiveKey) async {
     final calendarBox = Hive.box<Calendar>('calendarBox');
     final deletedTask = calendarBox.get(hiveKey);
 
@@ -47,18 +47,64 @@ class TaskCard extends StatelessWidget {
       ),
     );
 
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 2), () async {
       if (context.mounted) Navigator.of(context).pop();
 
       if (deletedTask != null) {
-        calendarBox.delete(hiveKey);
+        final id = deletedTask.notificationId;
 
+        // ✅ Cancel scheduled notification if it exists and is valid
+        if (id != null && id is int && id <= 2147483647) {
+          await NotificationService.cancelNotification(id);
+        }
+
+        // ✅ Delete the task from Hive
+        await calendarBox.delete(hiveKey);
+
+        // ✅ Update badge count
+        Provider.of<ReminderCountProvider>(
+          context,
+          listen: false,
+        ).updateReminderCount();
+
+        // ✅ Show undo snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Task deleted'),
             action: SnackBarAction(
               label: 'Undo',
-              onPressed: () => calendarBox.put(hiveKey, deletedTask),
+              onPressed: () async {
+                await calendarBox.put(hiveKey, deletedTask);
+
+                final reminder = deletedTask.parsedReminderTime;
+
+                if (reminder != null) {
+                  final scheduledTime = DateTime(
+                    deletedTask.date.year,
+                    deletedTask.date.month,
+                    deletedTask.date.day,
+                    reminder.hour,
+                    reminder.minute,
+                  );
+
+                  await NotificationService.scheduleNotification(
+                    id:
+                        id ??
+                        DateTime.now().millisecondsSinceEpoch.remainder(
+                          1000000,
+                        ),
+                    title: deletedTask.title,
+                    body: 'Reminder for ${deletedTask.title}',
+                    scheduledTime: scheduledTime,
+                    category: deletedTask.category,
+                  );
+
+                  Provider.of<ReminderCountProvider>(
+                    context,
+                    listen: false,
+                  ).updateReminderCount();
+                }
+              },
             ),
             duration: const Duration(seconds: 4),
           ),
@@ -144,7 +190,7 @@ class TaskCard extends StatelessWidget {
             );
 
             await NotificationService.scheduleNotification(
-              id: updatedTask.notificationId,
+              id: updatedTask.notificationId!,
               title: updatedTask.title,
               body: 'Reminder for ${updatedTask.title}',
               scheduledTime: scheduledDateTime,
@@ -202,7 +248,9 @@ class TaskCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        task.parsedTime.format(context),
+                        task.parsedReminderTime != null
+                            ? task.parsedReminderTime!.format(context)
+                            : '',
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ],

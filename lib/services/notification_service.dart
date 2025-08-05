@@ -42,49 +42,54 @@ class NotificationService {
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  static Future<void> scheduleNotification({
+  /// 🚨 Schedules a notification — returns `false` if scheduledTime is in the past.
+  static Future<bool> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledTime,
     required String category,
   }) async {
-    if (scheduledTime.isAfter(DateTime.now())) {
-      await _notificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledTime, tz.local),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'todo_reminders',
-            'Task Reminders',
-            channelDescription: 'Task Reminder Notifications',
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
+    final now = DateTime.now();
 
-      final box = Hive.box('remindersBox');
-      await box.put(id, {
-        'id': id,
-        'body': body,
-        'time': scheduledTime,
-        'category': category,
-      });
-
-      _updateGlobalReminderCount();
-
-      debugPrint("✅ Reminder scheduled and saved in Hive (id: $id)");
-    } else {
-      debugPrint("❌ Skipping reminder: $scheduledTime is in the past.");
+    if (!scheduledTime.isAfter(now)) {
+      debugPrint("❌ Cannot schedule reminder in the past: $scheduledTime");
+      return false;
     }
+
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'todo_reminders',
+          'Task Reminders',
+          channelDescription: 'Task Reminder Notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+
+    final box = Hive.box('remindersBox');
+    await box.put(id, {
+      'id': id,
+      'body': body,
+      'time': scheduledTime,
+      'category': category,
+    });
+
+    _updateGlobalReminderCount();
+
+    debugPrint("✅ Reminder scheduled and saved in Hive (id: $id)");
+    return true;
   }
 
   static Future<void> cancelNotification(int id) async {

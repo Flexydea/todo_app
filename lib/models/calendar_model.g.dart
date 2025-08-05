@@ -22,8 +22,8 @@ class CalendarAdapter extends TypeAdapter<Calendar> {
       time: fields[2] as TimeOfDay,
       done: fields[3] as bool,
       category: fields[4] as String,
-      reminderTime: fields[6] as TimeOfDay?,
       notificationId: fields[5] as int?,
+      reminderTime: fields[6] as TimeOfDay?,
     );
   }
 
