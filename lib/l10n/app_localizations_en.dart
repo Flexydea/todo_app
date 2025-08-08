@@ -9,6 +9,48 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get tabCategories => 'Categories';
+
+  @override
+  String get tabCalendar => 'Calendar';
+
+  @override
+  String get tabProfile => 'Profile';
+
+  @override
+  String get editTask => 'Edit Task';
+
+  @override
+  String get createTask => 'Create Task';
+
+  @override
+  String get taskTitle => 'Task Title';
+
+  @override
+  String get enterTitle => 'Enter a title';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get saveTask => 'Save Task';
+
+  @override
+  String get noTasksToday => 'No tasks today';
+
+  @override
+  String get upcomingReminders => 'Upcoming Reminders';
+
+  @override
   String get settings => 'Settings';
 
   @override
@@ -22,6 +64,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get language => 'Language';
+
+  @override
+  String get noUpcomingReminders => 'No upcoming reminders';
+
+  @override
+  String get reminderDeleted => 'Reminder deleted!';
 
   @override
   String get logout => 'Logout';
@@ -39,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pending => 'Pending';
 
   @override
-  String get upcomingReminders => 'Upcoming Reminders';
+  String get noCategoriesFound => 'No categories found.\\nPlease create a category first.';
 
   @override
   String get deleteAllTitle => 'Delete all my data';
@@ -52,4 +100,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get delete => 'Delete';
+
+  @override
+  String get daily => 'Daily';
+
+  @override
+  String get monthly => 'Monthly';
+
+  @override
+  String get taskDeleted => 'Task deleted!';
 }

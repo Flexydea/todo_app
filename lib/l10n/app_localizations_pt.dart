@@ -9,47 +9,104 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
-  String get settings => 'Configurações';
+  String get tabCategories => 'Categorie';
 
   @override
-  String get statistics => 'Estatísticas';
+  String get tabCalendar => 'Calendario';
 
   @override
-  String get darkMode => 'Modo escuro';
+  String get tabProfile => 'Profilo';
 
   @override
-  String get notificationSettings => 'Notificações';
+  String get editTask => 'Modifica attività';
 
   @override
-  String get language => 'Idioma';
+  String get createTask => 'Crea attività';
 
   @override
-  String get logout => 'Sair';
+  String get taskTitle => 'Titolo dell\'attività';
 
   @override
-  String get clearAllData => 'Apagar todos os dados';
+  String get enterTitle => 'Inserisci un titolo';
 
   @override
-  String get total => 'Total';
+  String get category => 'Categoria';
 
   @override
-  String get completed => 'Concluídas';
+  String get time => 'Ora';
 
   @override
-  String get pending => 'Pendentes';
+  String get date => 'Data';
 
   @override
-  String get upcomingReminders => 'Próximos lembretes';
+  String get saveChanges => 'Salva modifiche';
 
   @override
-  String get deleteAllTitle => 'Excluir todos os meus dados';
+  String get saveTask => 'Salva attività';
 
   @override
-  String get deleteAllBody => 'Isto excluirá permanentemente suas tarefas e lembretes neste dispositivo. As categorias serão mantidas. Esta ação não pode ser desfeita.';
+  String get noTasksToday => 'Nessuna attività oggi';
 
   @override
-  String get cancel => 'Cancelar';
+  String get upcomingReminders => 'Promemoria imminenti';
 
   @override
-  String get delete => 'Excluir';
+  String get settings => 'Impostazioni';
+
+  @override
+  String get statistics => 'Statistiche';
+
+  @override
+  String get darkMode => 'Modalità scura';
+
+  @override
+  String get notificationSettings => 'Notifiche';
+
+  @override
+  String get language => 'Lingua';
+
+  @override
+  String get noUpcomingReminders => 'Nenhum lembrete futuro';
+
+  @override
+  String get reminderDeleted => 'Lembrete excluído!';
+
+  @override
+  String get logout => 'Esci';
+
+  @override
+  String get clearAllData => 'Cancella tutti i dati';
+
+  @override
+  String get total => 'Totale';
+
+  @override
+  String get completed => 'Completate';
+
+  @override
+  String get pending => 'In sospeso';
+
+  @override
+  String get noCategoriesFound => 'Nessuna categoria trovata.\\nCrea prima una categoria.';
+
+  @override
+  String get deleteAllTitle => 'Elimina tutti i miei dati';
+
+  @override
+  String get deleteAllBody => 'Questo eliminerà definitivamente le tue attività e i promemoria su questo dispositivo. Le categorie verranno mantenute. Questa azione non può essere annullata.';
+
+  @override
+  String get cancel => 'Annulla';
+
+  @override
+  String get delete => 'Elimina';
+
+  @override
+  String get daily => 'Giornaliero';
+
+  @override
+  String get monthly => 'Mensile';
+
+  @override
+  String get taskDeleted => 'Attività eliminata!';
 }

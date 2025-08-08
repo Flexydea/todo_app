@@ -113,6 +113,90 @@ abstract class AppLocalizations {
     Locale('zh')
   ];
 
+  /// No description provided for @tabCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get tabCategories;
+
+  /// No description provided for @tabCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get tabCalendar;
+
+  /// No description provided for @tabProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get tabProfile;
+
+  /// No description provided for @editTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get editTask;
+
+  /// No description provided for @createTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Task'**
+  String get createTask;
+
+  /// No description provided for @taskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Title'**
+  String get taskTitle;
+
+  /// No description provided for @enterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title'**
+  String get enterTitle;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @time.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get time;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @saveTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Task'**
+  String get saveTask;
+
+  /// No description provided for @noTasksToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks today'**
+  String get noTasksToday;
+
+  /// No description provided for @upcomingReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming Reminders'**
+  String get upcomingReminders;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
@@ -142,6 +226,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
+
+  /// No description provided for @noUpcomingReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming reminders'**
+  String get noUpcomingReminders;
+
+  /// No description provided for @reminderDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder deleted!'**
+  String get reminderDeleted;
 
   /// No description provided for @logout.
   ///
@@ -173,11 +269,11 @@ abstract class AppLocalizations {
   /// **'Pending'**
   String get pending;
 
-  /// No description provided for @upcomingReminders.
+  /// No description provided for @noCategoriesFound.
   ///
   /// In en, this message translates to:
-  /// **'Upcoming Reminders'**
-  String get upcomingReminders;
+  /// **'No categories found.\\nPlease create a category first.'**
+  String get noCategoriesFound;
 
   /// No description provided for @deleteAllTitle.
   ///
@@ -202,6 +298,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
+
+  /// No description provided for @daily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get daily;
+
+  /// No description provided for @monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get monthly;
+
+  /// No description provided for @taskDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deleted!'**
+  String get taskDeleted;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -9,6 +9,48 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get tabCategories => 'Catégories';
+
+  @override
+  String get tabCalendar => 'Calendrier';
+
+  @override
+  String get tabProfile => 'Profil';
+
+  @override
+  String get editTask => 'Modifier la tâche';
+
+  @override
+  String get createTask => 'Créer une tâche';
+
+  @override
+  String get taskTitle => 'Titre de la tâche';
+
+  @override
+  String get enterTitle => 'Saisissez un titre';
+
+  @override
+  String get category => 'Catégorie';
+
+  @override
+  String get time => 'Heure';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get saveChanges => 'Enregistrer';
+
+  @override
+  String get saveTask => 'Enregistrer la tâche';
+
+  @override
+  String get noTasksToday => 'Aucune tâche aujourd’hui';
+
+  @override
+  String get upcomingReminders => 'Rappels à venir';
+
+  @override
   String get settings => 'Paramètres';
 
   @override
@@ -22,6 +64,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get language => 'Langue';
+
+  @override
+  String get noUpcomingReminders => 'Aucun rappel à venir';
+
+  @override
+  String get reminderDeleted => 'Rappel supprimé !';
 
   @override
   String get logout => 'Se déconnecter';
@@ -39,7 +87,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pending => 'En attente';
 
   @override
-  String get upcomingReminders => 'Rappels à venir';
+  String get noCategoriesFound => 'Aucune catégorie trouvée.\\nVeuillez d’abord créer une catégorie.';
 
   @override
   String get deleteAllTitle => 'Supprimer toutes mes données';
@@ -52,4 +100,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get delete => 'Supprimer';
+
+  @override
+  String get daily => 'Quotidien';
+
+  @override
+  String get monthly => 'Mensuel';
+
+  @override
+  String get taskDeleted => 'Tâche supprimée !';
 }

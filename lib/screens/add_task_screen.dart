@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:todo_app/models/calendar_model.dart';
 import 'package:intl/intl.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
+import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  String _selectedCategory = 'Work';
+  String _selectedCategory = '';
   TimeOfDay _selectedTime = TimeOfDay.now();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay? _reminderTime;
@@ -24,10 +25,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   void initState() {
     super.initState();
-
     final Box<Category> categoryBox = Hive.box<Category>('categoryBox');
     _categories = categoryBox.values.map((e) => e.title).toList();
-
     if (_categories.isNotEmpty) {
       _selectedCategory = _categories.first;
     }
@@ -39,9 +38,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       initialTime: _selectedTime,
     );
     if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-      });
+      setState(() => _selectedTime = picked);
     }
   }
 
@@ -53,9 +50,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       lastDate: DateTime(2030),
     );
     if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
+      setState(() => _selectedDate = picked);
     }
   }
 
@@ -65,21 +60,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         title: _titleController.text,
         time: _selectedTime,
         date: _selectedDate,
-        category:
-            _selectedCategory, // Make sure you're assigning the selected category
-        done: false, // default to not done
+        category: _selectedCategory,
+        done: false,
         reminderTime: _reminderTime,
-        notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
-              1000000,
-            ),
+        notificationId:
+            DateTime.now().millisecondsSinceEpoch.remainder(1000000),
       );
 
       final _calendarBox = Hive.box<Calendar>('calendarBox');
-      _calendarBox.add(newTask); // This saves the task to Hive
+      _calendarBox.add(newTask);
 
-      Navigator.pop(context, newTask); // Pass back to the previous screen
+      Navigator.pop(context, newTask);
 
-      // Reset form
       _titleController.clear();
       _selectedTime = TimeOfDay.now();
       _selectedDate = DateTime.now();
@@ -89,18 +81,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Task'),
+        title: Text(t.createTask),
         backgroundColor: Colors.green,
       ),
       body: _categories.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                'No categories found.\nPlease create a category first.',
+                t.noCategoriesFound,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             )
           : Padding(
@@ -114,15 +107,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       controller: _titleController,
                       style: theme.textTheme.bodyLarge,
                       decoration: InputDecoration(
-                        labelText: "Task Title",
+                        labelText: t.taskTitle,
                         labelStyle: theme.textTheme.labelLarge,
                         border: const OutlineInputBorder(),
                         filled: true,
                         fillColor: theme.cardColor,
                       ),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Enter a title'
-                          : null,
+                      validator: (value) =>
+                          value == null || value.isEmpty ? t.enterTitle : null,
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -133,10 +125,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                           .map(
                             (cat) => DropdownMenuItem(
                               value: cat,
-                              child: Text(
-                                cat,
-                                style: theme.textTheme.bodyLarge,
-                              ),
+                              child:
+                                  Text(cat, style: theme.textTheme.bodyLarge),
                             ),
                           )
                           .toList(),
@@ -146,7 +136,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         }
                       },
                       decoration: InputDecoration(
-                        labelText: 'Category',
+                        labelText: t.category,
                         labelStyle: theme.textTheme.labelLarge,
                         border: const OutlineInputBorder(),
                         filled: true,
@@ -154,7 +144,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('Time', style: theme.textTheme.bodyLarge),
+                    Text(t.time, style: theme.textTheme.bodyLarge),
                     const SizedBox(height: 6),
                     GestureDetector(
                       onTap: _pickTime,
@@ -169,7 +159,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('Date', style: theme.textTheme.bodyLarge),
+                    Text(t.date, style: theme.textTheme.bodyLarge),
                     const SizedBox(height: 6),
                     GestureDetector(
                       onTap: _pickDate,
@@ -190,9 +180,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text(
-                        'Save Task',
-                        style: TextStyle(color: Colors.black, fontSize: 16),
+                      child: Text(
+                        t.saveTask,
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 16),
                       ),
                     ),
                   ],

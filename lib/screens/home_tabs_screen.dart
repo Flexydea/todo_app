@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_app/models/calendar_model.dart';
-import 'package:todo_app/providers/selected_category_provider.dart';
-import 'package:todo_app/screens/upcoming_reminders_screen.dart';
-import 'category_screen.dart';
-import 'calendar_screen.dart';
-import 'profile_screen.dart';
 import 'package:badges/badges.dart' as badges;
-import 'package:todo_app/services/notification_service.dart';
+
+import 'package:todo_app/providers/selected_category_provider.dart';
 import 'package:todo_app/providers/reminder_count_provider.dart';
+import 'package:todo_app/screens/upcoming_reminders_screen.dart';
+import 'package:todo_app/screens/category_screen.dart';
+import 'package:todo_app/screens/calendar_screen.dart'
+    hide UpcomingRemindersScreen;
+import 'package:todo_app/screens/profile_screen.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class HomeTabsScreen extends StatefulWidget {
   const HomeTabsScreen({Key? key}) : super(key: key);
@@ -21,13 +21,13 @@ class HomeTabsScreen extends StatefulWidget {
 class _HomeTabsScreenState extends State<HomeTabsScreen> {
   int _currentIndex = 0;
 
-  final List<String> _titles = ['Categories', 'Calendar', 'Profile'];
-
   @override
   Widget build(BuildContext context) {
-    final selectedCategory = Provider.of<SelectedCategoryProvider>(
-      context,
-    ).selectedCategory;
+    final t = AppLocalizations.of(context)!;
+    final titles = [t.tabCategories, t.tabCalendar, t.tabProfile];
+
+    final selectedCategory =
+        context.watch<SelectedCategoryProvider>().selectedCategory;
 
     return Scaffold(
       appBar: AppBar(
@@ -35,23 +35,18 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  Provider.of<SelectedCategoryProvider>(
-                    context,
-                    listen: false,
-                  ).clearCategory();
-                  setState(() {
-                    _currentIndex = 0;
-                  });
+                  context.read<SelectedCategoryProvider>().clearCategory();
+                  setState(() => _currentIndex = 0);
                 },
               )
             : null,
-        title: Text(_titles[_currentIndex]),
+        title: Text(titles[_currentIndex]),
         backgroundColor: Colors.green,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: Consumer<ReminderCountProvider>(
-              builder: (context, reminderProvider, _) {
+              builder: (_, reminderProvider, __) {
                 return badges.Badge(
                   position: badges.BadgePosition.topEnd(top: 0, end: 3),
                   showBadge: reminderProvider.count > 0,
@@ -69,15 +64,13 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => UpcomingRemindersScreen(),
+                          builder: (_) => const UpcomingRemindersScreen(),
                         ),
                       );
-
-                      // 🔁 Refresh on return
-                      Provider.of<ReminderCountProvider>(
-                        context,
-                        listen: false,
-                      ).updateReminderCount();
+                      // refresh badge after returning
+                      context
+                          .read<ReminderCountProvider>()
+                          .updateReminderCount();
                     },
                   ),
                 );
@@ -93,25 +86,23 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           if (_currentIndex == index && index == 1) {
-            Provider.of<SelectedCategoryProvider>(
-              context,
-              listen: false,
-            ).clearCategory();
+            context.read<SelectedCategoryProvider>().clearCategory();
           }
-          setState(() {
-            _currentIndex = index;
-          });
+          setState(() => _currentIndex = index);
         },
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Categories',
+            icon: const Icon(Icons.dashboard),
+            label: t.tabCategories,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Calendar',
+            icon: const Icon(Icons.calendar_today),
+            label: t.tabCalendar,
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person),
+            label: t.tabProfile,
+          ),
         ],
       ),
     );
@@ -121,24 +112,18 @@ class _HomeTabsScreenState extends State<HomeTabsScreen> {
     if (_currentIndex == 0) {
       return CategoryScreen(
         onCategoryTap: (selectedCategory) {
-          Provider.of<SelectedCategoryProvider>(
-            context,
-            listen: false,
-          ).setCategory(selectedCategory);
-
-          setState(() {
-            _currentIndex = 1;
-          });
+          context
+              .read<SelectedCategoryProvider>()
+              .setCategory(selectedCategory);
+          setState(() => _currentIndex = 1);
         },
       );
     }
 
+    // lib/screens/home_tabs_screen.dart
     if (_currentIndex == 1) {
-      // Watch the selected category to force rebuild
       return Consumer<SelectedCategoryProvider>(
-        builder: (context, provider, _) {
-          return CalendarScreen(); // now this rebuilds properly
-        },
+        builder: (_, __, ___) => CalendarScreen(), // ← remove const
       );
     }
 

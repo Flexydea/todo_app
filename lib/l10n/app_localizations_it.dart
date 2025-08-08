@@ -9,6 +9,48 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get tabCategories => 'Categorie';
+
+  @override
+  String get tabCalendar => 'Calendario';
+
+  @override
+  String get tabProfile => 'Profilo';
+
+  @override
+  String get editTask => 'Modifica attività';
+
+  @override
+  String get createTask => 'Crea attività';
+
+  @override
+  String get taskTitle => 'Titolo dell\'attività';
+
+  @override
+  String get enterTitle => 'Inserisci un titolo';
+
+  @override
+  String get category => 'Categoria';
+
+  @override
+  String get time => 'Ora';
+
+  @override
+  String get date => 'Data';
+
+  @override
+  String get saveChanges => 'Salva modifiche';
+
+  @override
+  String get saveTask => 'Salva attività';
+
+  @override
+  String get noTasksToday => 'Nessuna attività oggi';
+
+  @override
+  String get upcomingReminders => 'Promemoria imminenti';
+
+  @override
   String get settings => 'Impostazioni';
 
   @override
@@ -24,10 +66,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get language => 'Lingua';
 
   @override
-  String get logout => 'Disconnetti';
+  String get noUpcomingReminders => 'Nessun promemoria in arrivo';
 
   @override
-  String get clearAllData => 'Elimina tutti i dati';
+  String get reminderDeleted => 'Promemoria eliminato!';
+
+  @override
+  String get logout => 'Esci';
+
+  @override
+  String get clearAllData => 'Cancella tutti i dati';
 
   @override
   String get total => 'Totale';
@@ -39,17 +87,26 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pending => 'In sospeso';
 
   @override
-  String get upcomingReminders => 'Promemoria in arrivo';
+  String get noCategoriesFound => 'Nessuna categoria trovata.\\nCrea prima una categoria.';
 
   @override
   String get deleteAllTitle => 'Elimina tutti i miei dati';
 
   @override
-  String get deleteAllBody => 'Questo eliminerà permanentemente le tue attività e i promemoria su questo dispositivo. Le categorie saranno mantenute. Questa azione non può essere annullata.';
+  String get deleteAllBody => 'Questo eliminerà definitivamente le tue attività e i promemoria su questo dispositivo. Le categorie verranno mantenute. Questa azione non può essere annullata.';
 
   @override
   String get cancel => 'Annulla';
 
   @override
   String get delete => 'Elimina';
+
+  @override
+  String get daily => 'Giornaliero';
+
+  @override
+  String get monthly => 'Mensile';
+
+  @override
+  String get taskDeleted => 'Attività eliminata!';
 }

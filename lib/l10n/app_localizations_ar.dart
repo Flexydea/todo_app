@@ -9,6 +9,48 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get tabCategories => 'الفئات';
+
+  @override
+  String get tabCalendar => 'التقويم';
+
+  @override
+  String get tabProfile => 'الملف الشخصي';
+
+  @override
+  String get editTask => 'تعديل المهمة';
+
+  @override
+  String get createTask => 'إنشاء مهمة';
+
+  @override
+  String get taskTitle => 'عنوان المهمة';
+
+  @override
+  String get enterTitle => 'أدخل عنوانًا';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get time => 'الوقت';
+
+  @override
+  String get date => 'التاريخ';
+
+  @override
+  String get saveChanges => 'حفظ التغييرات';
+
+  @override
+  String get saveTask => 'حفظ المهمة';
+
+  @override
+  String get noTasksToday => 'لا توجد مهام اليوم';
+
+  @override
+  String get upcomingReminders => 'التذكيرات القادمة';
+
+  @override
   String get settings => 'الإعدادات';
 
   @override
@@ -18,10 +60,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get darkMode => 'الوضع الداكن';
 
   @override
-  String get notificationSettings => 'الإشعارات';
+  String get notificationSettings => 'إعدادات الإشعارات';
 
   @override
   String get language => 'اللغة';
+
+  @override
+  String get noUpcomingReminders => 'لا توجد تذكيرات قادمة';
+
+  @override
+  String get reminderDeleted => 'تم حذف التذكير!';
 
   @override
   String get logout => 'تسجيل الخروج';
@@ -36,10 +84,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get completed => 'المكتملة';
 
   @override
-  String get pending => 'المعلقة';
+  String get pending => 'قيد الانتظار';
 
   @override
-  String get upcomingReminders => 'التذكيرات القادمة';
+  String get noCategoriesFound => 'لا توجد فئات.\\nيرجى إنشاء فئة أولاً.';
 
   @override
   String get deleteAllTitle => 'حذف كل بياناتي';
@@ -52,4 +100,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get delete => 'حذف';
+
+  @override
+  String get daily => 'يومي';
+
+  @override
+  String get monthly => 'شهري';
+
+  @override
+  String get taskDeleted => 'تم حذف المهمة!';
 }

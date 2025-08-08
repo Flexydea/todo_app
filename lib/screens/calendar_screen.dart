@@ -5,19 +5,18 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/providers/selected_category_provider.dart';
-import 'package:todo_app/screens/edit_calendar_task_screen.dart';
-import 'package:todo_app/services/notification_service.dart';
-import 'package:todo_app/screens/upcoming_reminders_screen.dart';
 import 'package:todo_app/widgets/task_card.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class CalendarScreen extends StatefulWidget {
   final VoidCallback? onClearFilter;
   final VoidCallback? onReminderChanged;
 
   const CalendarScreen({Key? key, this.onClearFilter, this.onReminderChanged})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -28,22 +27,20 @@ class _CalendarScreenState extends State<CalendarScreen>
   bool isMonthly = true;
   DateTime _selectedDate = DateTime.now();
   late Box<Calendar> _calendarBox;
-  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _calendarBox = Hive.box<Calendar>('calendarBox');
     _selectedDate = DateTime.now();
-    _loadTasks();
-  }
-
-  Future<void> _loadTasks() async {
-    await Future.delayed(Duration(milliseconds: 100));
-    if (mounted) setState(() {});
+    // tiny delay gives Hive/Provider time to settle after hot reloads
+    Future.delayed(const Duration(milliseconds: 80), () {
+      if (mounted) setState(() {});
+    });
   }
 
   void _showDeleteAnimation(BuildContext context) {
+    // NOTE: If you want this text localized, add "taskDeleted" to your ARB files.
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -65,7 +62,7 @@ class _CalendarScreenState extends State<CalendarScreen>
               ),
               const SizedBox(height: 10),
               const Text(
-                'Task deleted!',
+                'Task deleted!', // TODO: localize if you add "taskDeleted"
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -81,7 +78,8 @@ class _CalendarScreenState extends State<CalendarScreen>
     });
   }
 
-  Widget _buildToggleTabs() {
+  Widget _buildToggleTabs(BuildContext context) {
+    // TODO: Add "daily" and "monthly" to your ARB files if you want these localized.
     return Container(
       height: 40,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -98,7 +96,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                 color: !isMonthly ? Colors.green : Colors.transparent,
                 alignment: Alignment.center,
                 child: Text(
-                  'DAILY',
+                  'DAILY', // t.daily (once added)
                   style: TextStyle(
                     color: !isMonthly ? Colors.white : Colors.black,
                     fontWeight: FontWeight.bold,
@@ -114,7 +112,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                 color: isMonthly ? Colors.green : Colors.transparent,
                 alignment: Alignment.center,
                 child: Text(
-                  'MONTHLY',
+                  'MONTHLY', // t.monthly (once added)
                   style: TextStyle(
                     color: isMonthly ? Colors.white : Colors.black,
                     fontWeight: FontWeight.bold,
@@ -140,7 +138,7 @@ class _CalendarScreenState extends State<CalendarScreen>
           onDaySelected: (selectedDay, _) {
             setState(() {
               _selectedDate = selectedDay;
-              isMonthly = false; // Optional: auto switch tab
+              isMonthly = false; // auto switch to daily after selecting a day
             });
           },
           eventLoader: (day) {
@@ -148,16 +146,16 @@ class _CalendarScreenState extends State<CalendarScreen>
                 .where((task) => isSameDay(task.date, day))
                 .toList();
           },
-          calendarStyle: CalendarStyle(
-            todayDecoration: const BoxDecoration(
+          calendarStyle: const CalendarStyle(
+            todayDecoration: BoxDecoration(
               color: Colors.green,
               shape: BoxShape.circle,
             ),
-            selectedDecoration: const BoxDecoration(
+            selectedDecoration: BoxDecoration(
               color: Colors.green,
               shape: BoxShape.circle,
             ),
-            markerDecoration: const BoxDecoration(
+            markerDecoration: BoxDecoration(
               color: Colors.red,
               shape: BoxShape.circle,
             ),
@@ -172,7 +170,8 @@ class _CalendarScreenState extends State<CalendarScreen>
     );
   }
 
-  Widget _buildDailyPicker() {
+  Widget _buildDailyPicker(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: 90,
       child: ListView.builder(
@@ -181,10 +180,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         itemCount: 30,
         itemBuilder: (context, index) {
           final date = DateTime.now().add(Duration(days: index));
-          final isSelected =
-              _selectedDate.year == date.year &&
-              _selectedDate.month == date.month &&
-              _selectedDate.day == date.day;
+          final isSelected = isSameDay(_selectedDate, date);
 
           return GestureDetector(
             onTap: () => setState(() => _selectedDate = date),
@@ -200,26 +196,29 @@ class _CalendarScreenState extends State<CalendarScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    DateFormat('dd').format(date),
+                    DateFormat('dd', Localizations.localeOf(context).toString())
+                        .format(date),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isSelected
                           ? Colors.white
-                          : Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white70
-                          : Colors.black,
+                          : isDark
+                              ? Colors.white70
+                              : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat('MMM').format(date),
+                    DateFormat(
+                            'MMM', Localizations.localeOf(context).toString())
+                        .format(date),
                     style: TextStyle(
                       fontSize: 12,
                       color: isSelected
                           ? Colors.white
-                          : Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white70
-                          : Colors.black,
+                          : isDark
+                              ? Colors.white70
+                              : Colors.black,
                     ),
                   ),
                 ],
@@ -233,24 +232,30 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   @override
   Widget build(BuildContext context) {
-    final selectedCategory = Provider.of<SelectedCategoryProvider>(
-      context,
-    ).selectedCategory;
+    final t = AppLocalizations.of(context)!;
+    final selectedCategory =
+        context.watch<SelectedCategoryProvider>().selectedCategory;
+
+    // Localized date label (e.g., “10 Aug 2025”) in current locale
+    final localeName = Localizations.localeOf(context).toString();
+    final dateLabel = DateFormat('dd MMM yyyy', localeName)
+        .format(_selectedDate)
+        .toUpperCase();
 
     return Column(
       children: [
-        _buildToggleTabs(),
-        isMonthly ? _buildMonthlyCalendar() : _buildDailyPicker(),
+        _buildToggleTabs(context),
+        isMonthly ? _buildMonthlyCalendar() : _buildDailyPicker(context),
         const Divider(thickness: 4),
         const SizedBox(height: 12),
         Align(
           alignment: Alignment.center,
           child: Text(
-            DateFormat('dd MMM yyyy').format(_selectedDate).toUpperCase(),
+            dateLabel,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
           ),
         ),
         const SizedBox(height: 16),
@@ -260,30 +265,28 @@ class _CalendarScreenState extends State<CalendarScreen>
             builder: (context, box, _) {
               final selectedDate = _selectedDate;
 
-              final tasksForDate =
-                  box.keys
-                      .where((key) {
-                        final task = box.get(key);
-                        if (task == null) return false;
+              final tasksForDate = box.keys
+                  .where((key) {
+                    final task = box.get(key);
+                    if (task == null) return false;
 
-                        final matchesDate = isSameDay(task.date, selectedDate);
+                    final matchesDate = isSameDay(task.date, selectedDate);
 
-                        final matchesCategory =
-                            selectedCategory == null ||
-                            task.category.trim().toLowerCase() ==
-                                selectedCategory.trim().toLowerCase();
+                    final matchesCategory = selectedCategory == null ||
+                        task.category.trim().toLowerCase() ==
+                            selectedCategory.trim().toLowerCase();
 
-                        return matchesDate && matchesCategory;
-                      })
-                      .map((key) => MapEntry(key, box.get(key)!))
-                      .toList()
-                    ..sort((a, b) => a.value.time.compareTo(b.value.time));
+                    return matchesDate && matchesCategory;
+                  })
+                  .map((key) => MapEntry(key, box.get(key)!))
+                  .toList()
+                ..sort((a, b) => a.value.time.compareTo(b.value.time));
 
               if (tasksForDate.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'No tasks today',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    t.noTasksToday, // ← localized
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                 );
               }
