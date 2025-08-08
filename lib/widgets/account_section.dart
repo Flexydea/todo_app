@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AccountSection extends StatefulWidget {
@@ -10,25 +11,69 @@ class AccountSection extends StatefulWidget {
 }
 
 class _AccountSectionState extends State<AccountSection> {
-  File? _profileImage;
-
-  final TextEditingController _nameController = TextEditingController(
-    text: "John Doe",
-  );
-
-  final String _email = "john.doe@email.com"; // Fixed email
+  Uint8List? _profileImageBytes;
+  late final TextEditingController _nameController;
   bool _isEditingName = false;
 
-  // Image picker for profile picture
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  // Non-editable email (load from Hive if present, otherwise default)
+  late final String _email;
 
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
+  Box get _settings => Hive.box('settingsBox');
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Load saved name
+    final savedName = (_settings.get('displayName') as String?) ?? 'John Doe';
+    _nameController = TextEditingController(text: savedName);
+
+    // Load saved image BYTES
+    final bytes = _settings.get('profileImageBytes');
+    if (bytes != null && bytes is Uint8List) {
+      _profileImageBytes = bytes;
     }
+
+    // (Optional) clean old path key if you used it before
+    if (_settings.containsKey('profileImagePath')) {
+      _settings.delete('profileImagePath');
+    }
+
+    // Load email (read-only display)
+    _email = (_settings.get('email') as String?) ?? 'john.doe@email.com';
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    try {
+      final bytes = await picked.readAsBytes();
+      await _settings.put('profileImageBytes', bytes);
+      setState(() => _profileImageBytes = bytes);
+    } catch (e) {
+      debugPrint('Failed to save avatar bytes: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not save profile photo')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleEditName() async {
+    if (_isEditingName) {
+      final name = _nameController.text.trim();
+      await _settings.put('displayName', name.isEmpty ? 'John Doe' : name);
+      if (name.isEmpty) _nameController.text = 'John Doe';
+    }
+    setState(() => _isEditingName = !_isEditingName);
   }
 
   @override
@@ -44,23 +89,23 @@ class _AccountSectionState extends State<AccountSection> {
           child: CircleAvatar(
             radius: 50,
             backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
-            backgroundImage: _profileImage != null
-                ? FileImage(_profileImage!)
+            backgroundImage: _profileImageBytes != null
+                ? MemoryImage(_profileImageBytes!)
                 : null,
-            child: _profileImage == null
+            child: _profileImageBytes == null
                 ? Icon(Icons.person, size: 50, color: theme.colorScheme.primary)
                 : null,
           ),
         ),
         const SizedBox(height: 12),
 
-        // Name with edit icon
+        // Name + edit toggle
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _isEditingName
                 ? SizedBox(
-                    width: 200,
+                    width: 220,
                     child: TextField(
                       controller: _nameController,
                       style: textTheme.titleMedium,
@@ -82,18 +127,22 @@ class _AccountSectionState extends State<AccountSection> {
                 size: 20,
                 color: theme.colorScheme.primary,
               ),
-              onPressed: () {
-                setState(() {
-                  _isEditingName = !_isEditingName;
-                });
-              },
+              onPressed: _toggleEditName,
               tooltip: _isEditingName ? 'Save name' : 'Edit name',
             ),
           ],
         ),
-        // Static email display
+
         const SizedBox(height: 6),
-        Text(_email, style: textTheme.bodySmall),
+
+        // Read-only email
+        Text(
+          _email,
+          style: textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+
         const SizedBox(height: 16),
         const Divider(thickness: 6),
       ],

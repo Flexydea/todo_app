@@ -70,12 +70,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         done: false, // default to not done
         reminderTime: _reminderTime,
         notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
-          1000000,
-        ),
+              1000000,
+            ),
       );
 
-      final calendarBox = Hive.box<Calendar>('calendarBox');
-      calendarBox.add(newTask); // This saves the task to Hive
+      final _calendarBox = Hive.box<Calendar>('calendarBox');
+      _calendarBox.add(newTask); // This saves the task to Hive
 
       Navigator.pop(context, newTask); // Pass back to the previous screen
 

@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart';
+import 'package:todo_app/providers/profile_photo_provider.dart';
 import 'package:todo_app/providers/reminder_count_provider.dart';
 import 'package:todo_app/providers/selected_category_provider.dart';
 import 'package:todo_app/theme/theme_notifier.dart';
@@ -35,6 +36,7 @@ void main() async {
   await Hive.openBox<Category>('categoryBox');
   await Hive.openBox<Calendar>('calendarBox');
   await Hive.openBox('remindersBox');
+  await Hive.openBox('settingsBox');
 
   fixNotificationIds();
 
@@ -60,6 +62,8 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => ReminderCountProvider()..updateReminderCount(),
         ),
+        ChangeNotifierProvider(
+            create: (_) => ProfilePhotoProvider()..load()), // 👈 add this
       ],
       child: const MyApp(),
     ),
@@ -73,8 +77,8 @@ void fixNotificationIds() {
     if (task != null && task.notificationId! > 2147483647) {
       final updated = task.copyWith(
         notificationId: DateTime.now().millisecondsSinceEpoch.remainder(
-          1000000,
-        ),
+              1000000,
+            ),
       );
       calendarBox.put(key, updated);
     }

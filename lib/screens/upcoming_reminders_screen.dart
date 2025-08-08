@@ -27,17 +27,16 @@ class _UpcomingRemindersScreenState extends State<UpcomingRemindersScreen> {
   void loadReminders() {
     final box = Hive.box('remindersBox');
 
-    reminders =
-        box.values
-            .cast<Map>()
-            .where((r) => r['time'] != null)
-            .map((r) => Map<String, dynamic>.from(r))
-            .toList()
-          ..sort(
-            (a, b) => DateTime.parse(
-              a['time'].toString(),
-            ).compareTo(DateTime.parse(b['time'].toString())),
-          );
+    reminders = box.values
+        .cast<Map>()
+        .where((r) => r['time'] != null)
+        .map((r) => Map<String, dynamic>.from(r))
+        .toList()
+      ..sort(
+        (a, b) => DateTime.parse(
+          a['time'].toString(),
+        ).compareTo(DateTime.parse(b['time'].toString())),
+      );
 
     setState(() {});
   }
@@ -126,16 +125,16 @@ class _UpcomingRemindersScreenState extends State<UpcomingRemindersScreen> {
                     await reminderBox.delete(reminderId);
 
                     // 🔁 Remove reminder from associated task in calendarBox
-                    final calendarBox = Hive.box<Calendar>('calendarBox');
+                    final _calendarBox = Hive.box<Calendar>('calendarBox');
 
-                    for (var key in calendarBox.keys) {
-                      final task = calendarBox.get(key);
+                    for (var key in _calendarBox.keys) {
+                      final task = _calendarBox.get(key);
                       if (task != null && task.notificationId == reminderId) {
                         final updated = task.copyWith(
                           reminderTime: null,
                           notificationId: null,
                         );
-                        await calendarBox.put(key, updated);
+                        await _calendarBox.put(key, updated);
                         break;
                       }
                     }
