@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:todo_app/screens/language_settings_screen.dart';
+import 'package:todo_app/screens/notification_settings_screen.dart';
 
 import 'package:todo_app/theme/theme_notifier.dart';
 import 'package:todo_app/widgets/account_section.dart';
@@ -128,11 +130,15 @@ class ProfileScreen extends StatelessWidget {
             _buildSettings(context, textTheme),
 
             ListTile(
-              leading: const Icon(Icons.settings),
+              leading: const Icon(Icons.notification_add_outlined),
               title: const Text("Notification Settings"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                // TODO: Navigate to a dedicated notification settings page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const NotificationSettingsScreen()),
+                );
               },
             ),
             ListTile(
@@ -140,16 +146,16 @@ class ProfileScreen extends StatelessWidget {
               title: const Text('Language'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                // TODO: Show language picker
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => LanguageSettingsScreen()),
+                );
               },
             ),
             // Logout
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text("Logout"),
-              onTap: () {
-                // TODO: Implement logout
-              },
+              onTap: () {},
             ),
 
             const SizedBox(height: 8),

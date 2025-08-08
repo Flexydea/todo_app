@@ -1,0 +1,19 @@
+
+{
+  "@@locale": "es",
+  "settings": "Ajustes",
+  "statistics": "Estadísticas",
+  "darkMode": "Modo oscuro",
+  "notificationSettings": "Notificaciones",
+  "language": "Idioma",
+  "logout": "Cerrar sesión",
+  "clearAllData": "Borrar todos los datos",
+  "total": "Total",
+  "completed": "Completadas",
+  "pending": "Pendientes",
+  "upcomingReminders": "Próximos recordatorios",
+  "deleteAllTitle": "Eliminar todos mis datos",
+  "deleteAllBody": "Esto eliminará permanentemente tus tareas y recordatorios en este dispositivo. Las categorías se mantendrán. Esta acción no se puede deshacer.",
+  "cancel": "Cancelar",
+  "delete": "Eliminar"
+}

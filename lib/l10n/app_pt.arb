@@ -1,0 +1,18 @@
+{
+  "@@locale": "pt",
+  "settings": "Configurações",
+  "statistics": "Estatísticas",
+  "darkMode": "Modo escuro",
+  "notificationSettings": "Notificações",
+  "language": "Idioma",
+  "logout": "Sair",
+  "clearAllData": "Apagar todos os dados",
+  "total": "Total",
+  "completed": "Concluídas",
+  "pending": "Pendentes",
+  "upcomingReminders": "Próximos lembretes",
+  "deleteAllTitle": "Excluir todos os meus dados",
+  "deleteAllBody": "Isto excluirá permanentemente suas tarefas e lembretes neste dispositivo. As categorias serão mantidas. Esta ação não pode ser desfeita.",
+  "cancel": "Cancelar",
+  "delete": "Excluir"
+}

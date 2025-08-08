@@ -1,0 +1,18 @@
+{
+  "@@locale": "hi",
+  "settings": "सेटिंग्स",
+  "statistics": "आँकड़े",
+  "darkMode": "डार्क मोड",
+  "notificationSettings": "नोटिफ़िकेशन सेटिंग्स",
+  "language": "भाषा",
+  "logout": "लॉग आउट",
+  "clearAllData": "सभी डेटा हटाएँ",
+  "total": "कुल",
+  "completed": "पूर्ण",
+  "pending": "लंबित",
+  "upcomingReminders": "आगामी रिमाइंडर",
+  "deleteAllTitle": "मेरा सारा डेटा हटाएँ",
+  "deleteAllBody": "इससे इस डिवाइस पर आपके कार्य और रिमाइंडर स्थायी रूप से हट जाएंगे। श्रेणियाँ बनी रहेंगी। इस कार्रवाई को वापस नहीं लिया जा सकता।",
+  "cancel": "रद्द करें",
+  "delete": "हटाएँ"
+}

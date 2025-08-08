@@ -1,0 +1,18 @@
+{
+  "@@locale": "fr",
+  "settings": "Paramètres",
+  "statistics": "Statistiques",
+  "darkMode": "Mode sombre",
+  "notificationSettings": "Notifications",
+  "language": "Langue",
+  "logout": "Se déconnecter",
+  "clearAllData": "Effacer toutes les données",
+  "total": "Total",
+  "completed": "Terminées",
+  "pending": "En attente",
+  "upcomingReminders": "Rappels à venir",
+  "deleteAllTitle": "Supprimer toutes mes données",
+  "deleteAllBody": "Cela supprimera définitivement vos tâches et rappels sur cet appareil. Les catégories seront conservées. Cette action est irréversible.",
+  "cancel": "Annuler",
+  "delete": "Supprimer"
+}

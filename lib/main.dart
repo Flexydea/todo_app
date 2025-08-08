@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart';
+import 'package:todo_app/providers/locale_provider.dart';
 import 'package:todo_app/providers/profile_photo_provider.dart';
 import 'package:todo_app/providers/reminder_count_provider.dart';
 import 'package:todo_app/providers/selected_category_provider.dart';
@@ -62,8 +66,8 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => ReminderCountProvider()..updateReminderCount(),
         ),
-        ChangeNotifierProvider(
-            create: (_) => ProfilePhotoProvider()..load()), // 👈 add this
+        ChangeNotifierProvider(create: (_) => ProfilePhotoProvider()..load()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
       child: const MyApp(),
     ),
@@ -91,9 +95,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+    final localeProvider = context.watch<LocaleProvider>();
+
     return MaterialApp(
-      navigatorKey: navigatorKey, // ✅ Global context access
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+
+      // Localization settings
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: context.watch<LocaleProvider>().locale,
+
       themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
         brightness: Brightness.light,
@@ -107,6 +119,7 @@ class MyApp extends StatelessWidget {
         cardColor: Colors.grey[900],
         textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.white)),
       ),
+
       home: const HomeTabsScreen(),
     );
   }

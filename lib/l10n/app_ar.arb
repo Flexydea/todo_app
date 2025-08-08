@@ -1,0 +1,18 @@
+{
+  "@@locale": "ar",
+  "settings": "الإعدادات",
+  "statistics": "الإحصائيات",
+  "darkMode": "الوضع الداكن",
+  "notificationSettings": "الإشعارات",
+  "language": "اللغة",
+  "logout": "تسجيل الخروج",
+  "clearAllData": "حذف كل البيانات",
+  "total": "الإجمالي",
+  "completed": "المكتملة",
+  "pending": "المعلقة",
+  "upcomingReminders": "التذكيرات القادمة",
+  "deleteAllTitle": "حذف كل بياناتي",
+  "deleteAllBody": "سيؤدي هذا إلى حذف مهامك وتذكيراتك نهائيًا على هذا الجهاز. سيتم الاحتفاظ بالفئات. لا يمكن التراجع عن هذا الإجراء.",
+  "cancel": "إلغاء",
+  "delete": "حذف"
+}

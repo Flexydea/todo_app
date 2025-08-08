@@ -1,0 +1,18 @@
+{
+  "@@locale": "it",
+  "settings": "Impostazioni",
+  "statistics": "Statistiche",
+  "darkMode": "Modalità scura",
+  "notificationSettings": "Notifiche",
+  "language": "Lingua",
+  "logout": "Disconnetti",
+  "clearAllData": "Elimina tutti i dati",
+  "total": "Totale",
+  "completed": "Completate",
+  "pending": "In sospeso",
+  "upcomingReminders": "Promemoria in arrivo",
+  "deleteAllTitle": "Elimina tutti i miei dati",
+  "deleteAllBody": "Questo eliminerà permanentemente le tue attività e i promemoria su questo dispositivo. Le categorie saranno mantenute. Questa azione non può essere annullata.",
+  "cancel": "Annulla",
+  "delete": "Elimina"
+}

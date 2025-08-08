@@ -1,0 +1,18 @@
+{
+  "@@locale": "de",
+  "settings": "Einstellungen",
+  "statistics": "Statistiken",
+  "darkMode": "Dunkelmodus",
+  "notificationSettings": "Benachrichtigungen",
+  "language": "Sprache",
+  "logout": "Abmelden",
+  "clearAllData": "Alle Daten löschen",
+  "total": "Gesamt",
+  "completed": "Erledigt",
+  "pending": "Ausstehend",
+  "upcomingReminders": "Bevorstehende Erinnerungen",
+  "deleteAllTitle": "Alle meine Daten löschen",
+  "deleteAllBody": "Dies löscht dauerhaft deine Aufgaben und Erinnerungen auf diesem Gerät. Kategorien bleiben erhalten. Diese Aktion kann nicht rückgängig gemacht werden.",
+  "cancel": "Abbrechen",
+  "delete": "Löschen"
+}

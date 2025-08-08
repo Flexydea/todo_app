@@ -1,0 +1,18 @@
+{
+  "@@locale": "ja",
+  "settings": "設定",
+  "statistics": "統計",
+  "darkMode": "ダークモード",
+  "notificationSettings": "通知設定",
+  "language": "言語",
+  "logout": "ログアウト",
+  "clearAllData": "すべてのデータを削除",
+  "total": "合計",
+  "completed": "完了",
+  "pending": "保留中",
+  "upcomingReminders": "今後のリマインダー",
+  "deleteAllTitle": "すべてのデータを削除",
+  "deleteAllBody": "このデバイス上のタスクとリマインダーが完全に削除されます。カテゴリは保持されます。この操作は元に戻せません。",
+  "cancel": "キャンセル",
+  "delete": "削除"
+}

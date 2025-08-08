@@ -12,8 +12,8 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static List<Map<String, dynamic>> get scheduledReminders => Hive.box(
-    'remindersBox',
-  ).values.cast<Map>().toList().cast<Map<String, dynamic>>();
+        'remindersBox',
+      ).values.cast<Map>().toList().cast<Map<String, dynamic>>();
 
   static Future<void> init() async {
     tzData.initializeTimeZones();
@@ -37,12 +37,16 @@ class NotificationService {
 
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()
+            IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  /// 🚨 Schedules a notification — returns `false` if scheduledTime is in the past.
+  static bool _notificationsEnabled() {
+    final box = Hive.box('settingsBox');
+    return box.get('notif_enabled', defaultValue: true) as bool;
+  }
+
+  // Schedules a notification — returns `false` if scheduledTime is in the past.
   static Future<bool> scheduleNotification({
     required int id,
     required String title,
@@ -50,10 +54,15 @@ class NotificationService {
     required DateTime scheduledTime,
     required String category,
   }) async {
-    final now = DateTime.now();
+    // Respect master switch
+    if (!_notificationsEnabled()) {
+      // debugPrint('Notifications disabled — skipping schedule.');
+      return false;
+    }
 
+    final now = DateTime.now();
     if (!scheduledTime.isAfter(now)) {
-      debugPrint("❌ Cannot schedule reminder in the past: $scheduledTime");
+      // debugPrint("Cannot schedule reminder in the past: $scheduledTime");
       return false;
     }
 
@@ -88,7 +97,7 @@ class NotificationService {
 
     _updateGlobalReminderCount();
 
-    debugPrint("✅ Reminder scheduled and saved in Hive (id: $id)");
+    // debugPrint("Reminder scheduled and saved in Hive (id: $id)");
     return true;
   }
 
@@ -99,7 +108,7 @@ class NotificationService {
 
     _updateGlobalReminderCount();
 
-    debugPrint("🚫 Reminder cancelled and removed from Hive (id: $id)");
+    // debugPrint("🚫 Reminder cancelled and removed from Hive (id: $id)");
   }
 
   static Future<void> cancelAll() async {
@@ -108,7 +117,7 @@ class NotificationService {
 
     _updateGlobalReminderCount();
 
-    debugPrint("🚫 All reminders cancelled and cleared from Hive");
+    // debugPrint("🚫 All reminders cancelled and cleared from Hive");
   }
 
   static void _updateGlobalReminderCount() {

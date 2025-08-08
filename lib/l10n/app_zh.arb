@@ -1,0 +1,18 @@
+{
+  "@@locale": "zh",
+  "settings": "设置",
+  "statistics": "统计",
+  "darkMode": "深色模式",
+  "notificationSettings": "通知设置",
+  "language": "语言",
+  "logout": "退出登录",
+  "clearAllData": "清除所有数据",
+  "total": "总计",
+  "completed": "已完成",
+  "pending": "待处理",
+  "upcomingReminders": "即将到来的提醒",
+  "deleteAllTitle": "删除我的所有数据",
+  "deleteAllBody": "这将永久删除此设备上的任务和提醒。分类将被保留。此操作无法撤销。",
+  "cancel": "取消",
+  "delete": "删除"
+}

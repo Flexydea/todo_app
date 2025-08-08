@@ -1,0 +1,19 @@
+
+{
+  "@@locale": "en",
+  "settings": "Settings",
+  "statistics": "Statistics",
+  "darkMode": "Dark Mode",
+  "notificationSettings": "Notification Settings",
+  "language": "Language",
+  "logout": "Logout",
+  "clearAllData": "Clear all data",
+  "total": "Total",
+  "completed": "Completed",
+  "pending": "Pending",
+  "upcomingReminders": "Upcoming Reminders",
+  "deleteAllTitle": "Delete all my data",
+  "deleteAllBody": "This will permanently delete your tasks and reminders on this device. Categories will be kept. This action cannot be undone.",
+  "cancel": "Cancel",
+  "delete": "Delete"
+}
