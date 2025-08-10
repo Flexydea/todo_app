@@ -482,142 +482,121 @@ class _SignInFormState extends State<_SignInForm> {
 
   /// Bottom sheet: reset password locally (no email service)
   Future<void> _forgotPassword() async {
-    final emailCtrl = TextEditingController();
+    final emailCtrl = TextEditingController(text: _email.text.trim());
     final newPwdCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
 
-    // Step 1: Ask for email
-    final emailOk = await showModalBottomSheet<bool>(
+    String? emailErr, pwdErr, confirmErr;
+
+    final saved = await showDialog<bool>(
       context: context,
-      isScrollControlled: true,
+      barrierDismissible: false,
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Reset password',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-              const SizedBox(height: 10),
-              TextField(
-                controller: emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Registered email',
-                  border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            Future<void> validateAndSave() async {
+              setState(() {
+                emailErr = pwdErr = confirmErr = null;
+              });
+
+              final email = emailCtrl.text.trim().toLowerCase();
+              final np = newPwdCtrl.text.trim();
+              final cp = confirmCtrl.text.trim();
+
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+                setState(() => emailErr = 'Enter a valid email');
+                return;
+              }
+              if (np.length < 6) {
+                setState(
+                    () => pwdErr = 'Password must be at least 6 characters');
+                return;
+              }
+              if (np != cp) {
+                setState(() => confirmErr = 'Passwords do not match');
+                return;
+              }
+
+              final userBox = Hive.isBoxOpen('userBox')
+                  ? Hive.box<User>('userBox')
+                  : await Hive.openBox<User>('userBox');
+
+              MapEntry<dynamic, User>? entry;
+              try {
+                entry = userBox.toMap().entries.firstWhere((e) {
+                  final u = e.value;
+                  return u is User && u.email.trim().toLowerCase() == email;
+                });
+              } catch (_) {
+                entry = null;
+              }
+
+              if (entry == null) {
+                setState(() => emailErr = 'Email not found');
+                return;
+              }
+
+              entry.value.password = np;
+              await entry.value.save();
+
+              if (ctx.mounted) Navigator.pop(ctx, true);
+            }
+
+            return AlertDialog(
+              title: const Text('Reset password'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: 'Registered email',
+                        border: const OutlineInputBorder(),
+                        errorText: emailErr,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: newPwdCtrl,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'New password',
+                        border: const OutlineInputBorder(),
+                        errorText: pwdErr,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: confirmCtrl,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm new password',
+                        border: const OutlineInputBorder(),
+                        errorText: confirmErr,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Continue'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel'),
                 ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (emailOk != true) return;
-
-    // Verify email exists
-    final userBox = Hive.isBoxOpen('userBox')
-        ? Hive.box<User>('userBox')
-        : await Hive.openBox<User>('userBox');
-
-    MapEntry<dynamic, User>? entry;
-    try {
-      entry = userBox.toMap().entries.firstWhere((e) {
-        final u = e.value;
-        return u is User &&
-            u.email.trim().toLowerCase() == emailCtrl.text.trim().toLowerCase();
-      });
-    } catch (_) {
-      entry = null;
-    }
-
-    if (entry == null) {
-      _toast('Email not found');
-      return;
-    }
-
-    // Step 2: Ask for new password
-    final resetOk = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Set a new password',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-              const SizedBox(height: 10),
-              TextField(
-                controller: newPwdCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New password',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: confirmCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm new password',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
+                TextButton(
+                  onPressed: validateAndSave,
                   child: const Text('Save'),
                 ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
+              ],
+            );
+          },
         );
       },
     );
 
-    if (resetOk == true) {
-      // Validate locally
-      final np = newPwdCtrl.text.trim();
-      final cp = confirmCtrl.text.trim();
-      if (np.length < 6) {
-        _toast('Password must be at least 6 characters');
-        return;
-      }
-      if (np != cp) {
-        _toast('Passwords do not match');
-        return;
-      }
-
-      // Update password in Hive
-      final u = entry.value;
-      u.password = np; // mutate the HiveObject
-      await u.save(); // persist the change
-
+    if (saved == true) {
       _toast('Password updated. Please sign in.');
     }
   }
@@ -699,7 +678,8 @@ class _SignInFormState extends State<_SignInForm> {
               const SizedBox(width: 6),
               const Text('Remember me'),
               const Spacer(),
-              TextButton(onPressed: () {}, child: const Text('Forgot?')),
+              TextButton(
+                  onPressed: _forgotPassword, child: const Text('Forgot?')),
             ],
           ),
           const SizedBox(height: 12),
