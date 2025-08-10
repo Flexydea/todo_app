@@ -110,6 +110,11 @@ class MyApp extends StatelessWidget {
     final themeNotifier = context.watch<ThemeNotifier>();
     final localeProvider = context.watch<LocaleProvider>();
 
+// Pull session flag from Hive. We stored an int user key at 'currentUser'.
+    //    If it exists, the user is logged in and we start at /home, else /auth.
+    final settingsBox = Hive.box('settingsBox');
+    final bool isLoggedIn = settingsBox.get('currentUser') != null;
+
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,

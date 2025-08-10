@@ -216,6 +216,12 @@ class _SignUpFormState extends State<_SignUpForm> {
       await settingsBox.delete('profileImageBytes');
       await resetAppDataForNewUser(context);
 
+      // only clear previous avatar if someone else was logged in before
+      final int? prevUserKey = settingsBox.get('currentUser') as int?;
+      if (prevUserKey != null && prevUserKey != userKey) {
+        await settingsBox.delete('profileImageBytes');
+      }
+
       _toast('Account created!');
 
       if (!mounted) return;
@@ -372,6 +378,22 @@ class _SignInFormState extends State<_SignInForm> {
     super.dispose();
   }
 
+  /// Prefill email + toggle from settingsBox if user chose "Remember me" earlier
+  Future<void> _loadRememberedEmail() async {
+    final settingsBox = Hive.isBoxOpen('settingsBox')
+        ? Hive.box('settingsBox')
+        : await Hive.openBox('settingsBox');
+
+    final remember = settingsBox.get('rememberMe', defaultValue: false) as bool;
+    final rememberedEmail = settingsBox.get('rememberedEmail') as String?;
+    if (remember && rememberedEmail != null && rememberedEmail.isNotEmpty) {
+      setState(() {
+        _remember = true;
+        _email.text = rememberedEmail;
+      });
+    }
+  }
+
   Future<void> _submit() async {
     // 1) Validate form
     if (!_form.currentState!.validate()) return;
@@ -416,13 +438,26 @@ class _SignInFormState extends State<_SignInForm> {
       // 6) Persist logged-in user key + name for UI
       final int newUserKey = entry.key as int;
       final int? prevUserKey = settingsBox.get('currentUser') as int?;
+
+      // Save logged-in user key
       await settingsBox.put('currentUser', newUserKey);
       await settingsBox.put('displayName', entry.value.name);
 
-      // 7) If the account CHANGED, wipe per-user data and avatar bytes
-      if (prevUserKey == null || prevUserKey != newUserKey) {
-        await resetAppDataForNewUser(context); // clears tasks/reminders/etc.
-        await settingsBox.delete('profileImageBytes'); // clear previous avatar
+      // Handle "Remember me"
+      if (_remember) {
+        await settingsBox.put('rememberMe', true);
+        await settingsBox.put('rememberedEmail', _email.text.trim());
+      } else {
+        await settingsBox.put('rememberMe', false);
+        await settingsBox.delete('rememberedEmail');
+      }
+
+      //  Reset ONLY if switching to a different account
+      if (prevUserKey != null && prevUserKey != newUserKey) {
+        await resetAppDataForNewUser(
+            context); // if you truly want clear-on-switch
+        await settingsBox
+            .delete('profileImageBytes'); // optional: force new avatar
       }
 
       // 8) (Optional) Load this user's photo path/bytes if you store per-user
@@ -442,6 +477,148 @@ class _SignInFormState extends State<_SignInForm> {
     } finally {
       // 10) Always stop the spinner unless we've already navigated
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Bottom sheet: reset password locally (no email service)
+  Future<void> _forgotPassword() async {
+    final emailCtrl = TextEditingController();
+    final newPwdCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+
+    // Step 1: Ask for email
+    final emailOk = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Reset password',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: 10),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Registered email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Continue'),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (emailOk != true) return;
+
+    // Verify email exists
+    final userBox = Hive.isBoxOpen('userBox')
+        ? Hive.box<User>('userBox')
+        : await Hive.openBox<User>('userBox');
+
+    MapEntry<dynamic, User>? entry;
+    try {
+      entry = userBox.toMap().entries.firstWhere((e) {
+        final u = e.value;
+        return u is User &&
+            u.email.trim().toLowerCase() == emailCtrl.text.trim().toLowerCase();
+      });
+    } catch (_) {
+      entry = null;
+    }
+
+    if (entry == null) {
+      _toast('Email not found');
+      return;
+    }
+
+    // Step 2: Ask for new password
+    final resetOk = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Set a new password',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: 10),
+              TextField(
+                controller: newPwdCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'New password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: confirmCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm new password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Save'),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (resetOk == true) {
+      // Validate locally
+      final np = newPwdCtrl.text.trim();
+      final cp = confirmCtrl.text.trim();
+      if (np.length < 6) {
+        _toast('Password must be at least 6 characters');
+        return;
+      }
+      if (np != cp) {
+        _toast('Passwords do not match');
+        return;
+      }
+
+      // Update password in Hive
+      final u = entry.value;
+      u.password = np; // mutate the HiveObject
+      await u.save(); // persist the change
+
+      _toast('Password updated. Please sign in.');
     }
   }
 

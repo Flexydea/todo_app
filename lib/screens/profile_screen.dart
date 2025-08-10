@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todo_app/models/user_model.dart';
+import 'package:todo_app/providers/profile_photo_provider.dart';
 import 'package:todo_app/screens/language_settings_screen.dart';
 import 'package:todo_app/screens/notification_settings_screen.dart';
 
@@ -154,40 +155,59 @@ class ProfileScreen extends StatelessWidget {
             ),
             // Logout
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout"),
-              onTap: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text("Confirm Logout"),
-                    content: const Text("Are you sure you want to log out?"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: const Text("Cancel"),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: const Text(
-                          "Logout",
-                          style: TextStyle(color: Colors.red),
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text("Logout"),
+                onTap: () async {
+                  // Step 1: Ask for confirmation
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text("Confirm Logout"),
+                      content: const Text("Are you sure you want to log out?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(false), // cancel
+                          child: const Text("Cancel"),
                         ),
-                      ),
-                    ],
-                  ),
-                );
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(true), // confirm
+                          child: const Text(
+                            "Logout",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
 
-                if (confirm == true) {
-                  final settingsBox = Hive.box('settingsBox');
-                  await settingsBox.delete('currentUser');
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, '/auth', (_) => false);
+                  // Step 2: If user clicked "Logout"
+                  if (confirm == true) {
+                    final settingsBox = Hive.box('settingsBox');
+
+                    // Delete current user session
+                    await settingsBox.delete('currentUser');
+
+                    // Remove remembered email only if user didn't enable "Remember me"
+                    final rememberMe = settingsBox.get('rememberMe',
+                        defaultValue: false) as bool;
+                    if (!rememberMe) {
+                      await settingsBox.delete('rememberedEmail');
+                    }
+
+                    // // Reset profile photo provider so next user starts clean
+                    // if (context.mounted) {
+                    //   context.read<ProfilePhotoProvider>().clear();
+                    // }
+
+                    // Navigate back to auth screen and clear navigation history
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/auth', (_) => false);
+                    }
                   }
-                }
-              },
-            ),
+                }),
 
             const SizedBox(height: 8),
 
