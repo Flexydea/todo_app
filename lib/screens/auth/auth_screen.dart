@@ -70,7 +70,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(22)),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+                    padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -110,7 +110,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
                         // Forms
                         SizedBox(
-                          height: 440, // enough space for keyboard on phones
+                          height: 338, // enough space for keyboard on phones
                           child: TabBarView(
                             controller: _tab,
                             children: const [
@@ -373,13 +373,15 @@ class _SignInFormState extends State<_SignInForm> {
   }
 
   Future<void> _submit() async {
+    // 1) Validate form
     if (!_form.currentState!.validate()) return;
 
+    // 2) Start loading + clear any old snackbars
     setState(() => _loading = true);
     ScaffoldMessenger.of(context).clearSnackBars();
 
     try {
-      // Ensure both boxes are open
+      // 3) Open boxes (idempotent if already open)
       final userBox = Hive.isBoxOpen('userBox')
           ? Hive.box<User>('userBox')
           : await Hive.openBox<User>('userBox');
@@ -391,47 +393,55 @@ class _SignInFormState extends State<_SignInForm> {
       final email = _email.text.trim().toLowerCase();
       final pwd = _password.text.trim();
 
-      // 1️ Find matching user entry
+      // 4) Look up a matching user (email + password)
       MapEntry<dynamic, User>? entry;
-
       try {
-        entry = userBox.toMap().entries.firstWhere(
-          (e) {
-            final u = e.value;
-            return u is User &&
-                u.email.trim().toLowerCase() == email &&
-                u.password == pwd;
-          },
-        );
+        entry = userBox.toMap().entries.firstWhere((e) {
+          final u = e.value;
+          return u is User &&
+              u.email.trim().toLowerCase() == email &&
+              u.password == pwd;
+        });
       } catch (_) {
-        entry = null;
+        entry = null; // none found
       }
 
+      // 5) Invalid credentials -> stop spinner and exit
       if (entry == null) {
+        if (mounted) setState(() => _loading = false); // <-- stop spinner
         _toast('Invalid credentials');
         return;
       }
 
-//  Store the numeric key in settingsBox
-      await settingsBox.put('currentUser', entry.key);
-      // update the display name to the logged-in user’s name
+      // 6) Persist logged-in user key + name for UI
+      final int newUserKey = entry.key as int;
+      final int? prevUserKey = settingsBox.get('currentUser') as int?;
+      await settingsBox.put('currentUser', newUserKey);
       await settingsBox.put('displayName', entry.value.name);
-      await resetAppDataForNewUser(context);
 
-// clear previous avatar so this account can set their own
-      await settingsBox.delete('profileImageBytes');
+      // 7) If the account CHANGED, wipe per-user data and avatar bytes
+      if (prevUserKey == null || prevUserKey != newUserKey) {
+        await resetAppDataForNewUser(context); // clears tasks/reminders/etc.
+        await settingsBox.delete('profileImageBytes'); // clear previous avatar
+      }
 
-      _toast('Welcome back!');
-
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
-      _toast('Sign in failed. Please try again.');
-      debugPrint('Sign in error: $e');
-    } finally {
+      // 8) (Optional) Load this user's photo path/bytes if you store per-user
       if (mounted) {
         context.read<ProfilePhotoProvider>().loadForCurrentUser();
       }
+
+      _toast('Welcome back!');
+
+      // 9) Navigate to home
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      // Any unexpected error
+      _toast('Sign in failed. Please try again.');
+      debugPrint('Sign in error: $e');
+    } finally {
+      // 10) Always stop the spinner unless we've already navigated
+      if (mounted) setState(() => _loading = false);
     }
   }
 
