@@ -8,6 +8,7 @@ import 'package:todo_app/l10n/app_localizations.dart';
 import 'package:todo_app/models/calendar_model.dart';
 import 'package:todo_app/models/category_model.dart';
 import 'package:todo_app/models/user_model.dart';
+import 'package:todo_app/screens/splash_screen.dart';
 import 'adapters/color_adapter.dart';
 import 'adapters/icon_data_adapter.dart';
 import 'adapters/time_of_day_adapter.dart';
@@ -138,8 +139,9 @@ class MyApp extends StatelessWidget {
       ),
 
       //  Routing
-      initialRoute: isLoggedIn ? '/home' : '/auth',
+      initialRoute: '/splash',
       routes: {
+        '/splash': (_) => const SplashScreen(),
         '/home': (_) => const HomeTabsScreen(),
         '/auth': (_) => const AuthScreen(),
       },
