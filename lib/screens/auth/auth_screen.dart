@@ -38,7 +38,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor:
-          isDark ? const Color(0xFF0B0F0C) : const Color(0xFFF8FAF9),
+          isDark ? const Color(0xFFF8FAF9) : const Color(0xFFF8FAF9),
       body: Stack(
         children: [
           // Top curved banner
@@ -48,12 +48,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 _CurvedTop(
                     color: isDark
                         ? const Color.fromARGB(255, 6, 117, 11)
-                        : const Color(0xFFEFF6EF)),
+                        : const Color.fromARGB(255, 6, 117, 11)),
                 const Spacer(),
                 _CurvedBottom(
                     color: isDark
                         ? const Color.fromARGB(255, 6, 117, 11)
-                        : const Color(0xFFEFF6EF)),
+                        : const Color.fromARGB(255, 6, 117, 11)),
               ],
             ),
           ),
@@ -70,7 +70,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(22)),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 6, 18, 22),
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -87,7 +87,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                               controller: _tab,
                               indicator: const UnderlineTabIndicator(
                                 borderSide: BorderSide(
-                                  width: 4.0, // Thickness of the underline
+                                  width: 5.0, // Thickness of the underline
                                   color: Colors.green, // Color of the underline
                                 ),
                                 insets: EdgeInsets.symmetric(
