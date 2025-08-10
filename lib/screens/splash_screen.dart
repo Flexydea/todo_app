@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 16),
 
-              // Fade + Slide transition for the title
+              /// Fade + Slide transition for the title
               FadeTransition(
                 opacity: _fade,
                 child: SlideTransition(
